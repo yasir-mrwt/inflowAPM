@@ -13,8 +13,8 @@ export async function authMiddleware(
     if (!header) {
       throw new AppError("authorization header is required", 401);
     }
-    const [schema, token] = header?.split("") || [];
-    if (schema !== "bearer" || !token) {
+    const [schema, token] = header?.split(" ") || [];
+    if (schema !== "Bearer" || !token) {
       throw new AppError(
         "authorization token must be bearer <accessToken>",
         401,

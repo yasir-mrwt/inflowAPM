@@ -4,6 +4,7 @@ import {
   registerUserModel,
   UserRow,
   saveRefreshToken,
+  logoutUser,
 } from "../models/user.model.js";
 import {
   LoginUserContract,
@@ -62,5 +63,13 @@ export async function saveRefreshTokenService(
   userId: string,
 ): Promise<UserRow | null> {
   const result = await saveRefreshToken(payLoad.refresh_token, userId);
+  return result;
+}
+
+//logout user controller
+export async function logoutUserService(
+  userId: string,
+): Promise<UserRow | null> {
+  const result = await logoutUser(userId);
   return result;
 }

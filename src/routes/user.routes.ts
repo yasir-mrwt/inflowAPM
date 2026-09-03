@@ -1,5 +1,6 @@
 import {
   loginUserController,
+  logoutUserController,
   registerUserController,
 } from "../controllers/user.controller.js";
 import app from "../app.js";
@@ -9,6 +10,7 @@ import {
   registerUserValidation,
 } from "../middlewares/validation.middleware.js";
 import { authRateLimit } from "../middlewares/rateLimit.middleware.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const userRouter: Application = Router();
 
@@ -24,5 +26,6 @@ userRouter.post(
   authRateLimit,
   loginUserController,
 );
+userRouter.post("/logout", authMiddleware, logoutUserController);
 
 export default userRouter;

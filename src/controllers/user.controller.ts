@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import {
   LoginUserService,
+  logoutUserService,
   registerUserService,
 } from "../services/user.service.js";
 import {
@@ -32,6 +33,7 @@ export const loginUserController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email, password } = req.body;
     const result = await LoginUserService({ email, password });
+    delete (result as any).password;
     if (!result) {
       throw new AppError("invalid input data", 401);
     }
@@ -46,6 +48,22 @@ export const loginUserController = catchAsync(
         access_token: accesToken,
         userData: result,
       },
+    });
+  },
+);
+
+export const logoutUserController = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user) {
+      return next(new AppError("user not authenticated", 401));
+    }
+    const result = await logoutUserService(req.user.id);
+    if (!result) {
+      return next(new AppError("error while logging out user", 500));
+    }
+    res.status(200).json({
+      success: true,
+      message: `user: ${req.user.email} logged out successfully`,
     });
   },
 );

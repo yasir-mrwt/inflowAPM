@@ -66,3 +66,23 @@ export async function saveRefreshToken(
     throw error;
   }
 }
+//logout interface
+export interface LogoutUserRow {
+  id: string;
+  email: string;
+}
+
+//logout user model
+export async function logoutUser(userId: string): Promise<UserRow | null> {
+  try {
+    const result = await pool.query(
+      `UPDATE inflowapm.users SET refresh_token = NULL WHERE id = $1 returning id,email,first_name,last_name,role,refresh_token,created_at;
+`,
+      [userId],
+    );
+    return result.rows[0] || null;
+  } catch (error: unknown) {
+    console.log("error while logging out user", error);
+    throw error;
+  }
+}
