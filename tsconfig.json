@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                          /* Compiles to modern, fast JavaScript */
+    "module": "NodeNext",                        /* Enforces native modern ESM import/export syntax */
+    "moduleResolution": "NodeNext",           /* Helps Node resolve complex folder directories */
+    "allowJs": true,             /*help allow js to be used with ts*/
+    "rootDir": "./src",                      /* Points to your raw TypeScript source code folder */
+    "outDir": "./dist",                          /* The target output drawer for compiled JavaScript production builds */
+    "esModuleInterop": true,                     /* Bridges compatibility fixes for older CommonJS packages */
+    "forceConsistentCasingInFileNames": true,    /* Prevents MacBook vs. Linux file capitalisation bugs */
+    "strict": true,                              /* 🛡️ THE SECURITY GUARD: Enables strict type-checking checks */
+    "skipLibCheck": true                         /* Skips scanning inside your heavy node_modules to keep compilation speeds fast */
+  },
+  "include": ["src/**/*"],                       /* Strictly compiles files inside your src directory */
+  "exclude": ["node_modules", "dist", "test"]    /* Prevents the compiler from touching cache folders or tests */
+}

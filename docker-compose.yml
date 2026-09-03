@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 🟢 1. REPRODUCIBLE NODE.JS EXPRESS API BACKEND SERVICE
+  api:
+    build: .
+    container_name: inflowapm_api
+    ports:
+      - "5002:5002"
+    env_file:
+      - .env  
+    environment:
+      - PORT=5002
+      - NODE_ENV=development
+      # URL-encoded password (%40) passed down to our API code client
+      - DATABASE_URL=postgresql://postgres:Aliza1965%40@inflowapm_postgres:5432/inflowapm_db
+      - REDIS_URL=redis://inflowapm_redis:6379
+      - ACCESS_TOKEN_SECRET=random_access_token_of_user_1234567890
+      - REFRESH_TOKEN_SECRET=random_refresh_token_of_user_1234567890
+
+    depends_on:
+      postgres:
+        condition: service_healthy   # 🟢 Tells API to wait until Postgres says "I'm fully initialized!"
+      redis:
+        condition: service_started
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npx tsx watch src/server.ts
+  
+
+  # 🔵 2. PRE-BAKED RELATIONAL POSTGRESQL DATABASE ENGINE
+  postgres:
+    image: postgres:18-alpine         # 🟢 Updated: Pulls the official PostgreSQL 18 build natively!
+    container_name: inflowapm_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Aliza1965@   # 🟢 Updated: Injects your exact password securely into the database container!
+      POSTGRES_DB: inflowapm_db
+    expose:
+      - "5432" 
+    volumes:
+      - pgdata:/var/lib/postgresql
+# 🟢 ADD THIS HEALTHCHECK LOCK BLOCK FOR POSTGRES 18+:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inflowapm_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+  # 🔴 3. PRE-BAKED HIGH-SPEED REDIS CACHE ENGINE
+  redis:
+    image: redis:7-alpine
+    container_name: inflowapm_redis
+    restart: always
+    expose:
+      - "6379"
+    volumes:
+      - redisdata:/data
+
+# 🔒 PHYSICAL MAC HDD PERSISTENT ENVELOPES VAULT
+volumes:
+  pgdata:
+  redisdata:
