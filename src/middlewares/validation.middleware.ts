@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { loginUserSchema, registerUserSchema } from "../schemas/user.schema.js";
+import {
+  loginUserSchema,
+  refreshTokenSchema,
+  registerUserSchema,
+} from "../schemas/user.schema.js";
 
 export async function registerUserValidation(
   req: Request,
@@ -19,6 +23,19 @@ export async function loginUserValidation(
   next: NextFunction,
 ): Promise<void> {
   const result = loginUserSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(result.error);
+  }
+  req.body = result.data;
+  return next();
+}
+
+export async function refreshTokenValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = refreshTokenSchema.safeParse(req.body);
   if (!result.success) {
     return next(result.error);
   }

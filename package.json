@@ -17,7 +17,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.1",
-    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^6.3.4",
@@ -37,6 +36,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.1",
     "@types/rate-limit-redis": "^1.7.4",
     "@types/supertest": "^7.2.1"
   }

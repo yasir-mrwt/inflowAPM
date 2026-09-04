@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   LoginUserService,
   logoutUserService,
+  refreshTokenSearchService,
   registerUserService,
 } from "../services/user.service.js";
 import {
@@ -11,6 +12,7 @@ import {
 import { catchAsync } from "../utils/catchAsync.js";
 import { AppError } from "../utils/AppError.js";
 import { saveRefreshToken } from "../models/user.model.js";
+import { success } from "zod";
 
 export const registerUserController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -64,6 +66,23 @@ export const logoutUserController = catchAsync(
     res.status(200).json({
       success: true,
       message: `user: ${req.user.email} logged out successfully`,
+    });
+  },
+);
+
+//creating new token for user based on refresh token search
+export const newAccessTokenController = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { refresh_token } = req.body;
+    const result = await refreshTokenSearchService(refresh_token);
+    if (!result) {
+      return next(new AppError("error while creating new access Token ", 500));
+    }
+    const newToken = generateAccessToken(result.id, result.email);
+    res.status(200).json({
+      success: true,
+      message: `new access token created successfully`,
+      new_access_token: newToken,
     });
   },
 );

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # 🟢 1. REPRODUCIBLE NODE.JS EXPRESS API BACKEND SERVICE
@@ -8,7 +8,7 @@ services:
     ports:
       - "5002:5002"
     env_file:
-      - .env  
+      - .env
     environment:
       - PORT=5002
       - NODE_ENV=development
@@ -18,31 +18,36 @@ services:
       - ACCESS_TOKEN_SECRET=random_access_token_of_user_1234567890
       - REFRESH_TOKEN_SECRET=random_refresh_token_of_user_1234567890
 
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+
     depends_on:
       postgres:
-        condition: service_healthy   # 🟢 Tells API to wait until Postgres says "I'm fully initialized!"
+        condition: service_healthy # 🟢 Tells API to wait until Postgres says "I'm fully initialized!"
       redis:
         condition: service_started
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: npx tsx watch src/server.ts
-  
 
   # 🔵 2. PRE-BAKED RELATIONAL POSTGRESQL DATABASE ENGINE
   postgres:
-    image: postgres:18-alpine         # 🟢 Updated: Pulls the official PostgreSQL 18 build natively!
+    image: postgres:18-alpine # 🟢 Updated: Pulls the official PostgreSQL 18 build natively!
     container_name: inflowapm_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Aliza1965@   # 🟢 Updated: Injects your exact password securely into the database container!
+      POSTGRES_PASSWORD: Aliza1965@ # 🟢 Updated: Injects your exact password securely into the database container!
       POSTGRES_DB: inflowapm_db
     expose:
-      - "5432" 
+      - "5432"
     volumes:
       - pgdata:/var/lib/postgresql
-# 🟢 ADD THIS HEALTHCHECK LOCK BLOCK FOR POSTGRES 18+:
+    # 🟢 ADD THIS HEALTHCHECK LOCK BLOCK FOR POSTGRES 18+:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d inflowapm_db"]
       interval: 3s

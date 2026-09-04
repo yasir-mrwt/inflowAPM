@@ -5,6 +5,7 @@ import {
   UserRow,
   saveRefreshToken,
   logoutUser,
+  refreshTokenVerification,
 } from "../models/user.model.js";
 import {
   LoginUserContract,
@@ -13,6 +14,9 @@ import {
 } from "../schemas/user.schema.js";
 import { AppError } from "../utils/AppError.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { config } from "../configs/env.js";
+import { emailQueue } from "../queues/email.queue.js";
 
 export async function registerUserService(
   payload: RegisterUserContract,
@@ -29,6 +33,11 @@ export async function registerUserService(
     payload.first_name,
     payload.last_name,
   );
+
+  await emailQueue.add("emailQueue", {
+    email: payload.email,
+    first_name: payload.first_name,
+  });
   return result;
 }
 
@@ -71,5 +80,22 @@ export async function logoutUserService(
   userId: string,
 ): Promise<UserRow | null> {
   const result = await logoutUser(userId);
+  return result;
+}
+
+export async function refreshTokenSearchService(
+  refresh_token: string,
+): Promise<UserRow | null> {
+  const decoded = jwt.verify(refresh_token, config.refresh_token) as {
+    id: string;
+    email: string;
+  };
+  const result = await refreshTokenVerification(refresh_token);
+  if (!result || result.refresh_token === null) {
+    throw new AppError("no refresh token found ", 400);
+  }
+  if (result.id !== decoded.id) {
+    throw new AppError("unauthenticated user/invalid refresh token", 400);
+  }
   return result;
 }

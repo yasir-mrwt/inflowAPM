@@ -11,4 +11,9 @@ redisClient.on("fail", (error: any) => {
   console.log("failed to connect to redis", error);
 });
 
+export const redisConnectionOptions = {
+  host: config.redis_url ? new URL(config.redis_url).hostname : "redis",
+  port: config.redis_url ? Number(new URL(config.redis_url).port) : 6379,
+  maxRetriesPerRequest: null,
+};
 export default redisClient;

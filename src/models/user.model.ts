@@ -1,5 +1,5 @@
 import pool from "../configs/db.js";
-import { QueryResult } from "pg";
+import { Query, QueryResult } from "pg";
 
 //data to be returned by the model
 export interface UserRow {
@@ -75,7 +75,7 @@ export interface LogoutUserRow {
 //logout user model
 export async function logoutUser(userId: string): Promise<UserRow | null> {
   try {
-    const result = await pool.query(
+    const result: QueryResult<UserRow> = await pool.query(
       `UPDATE inflowapm.users SET refresh_token = NULL WHERE id = $1 returning id,email,first_name,last_name,role,refresh_token,created_at;
 `,
       [userId],
@@ -83,6 +83,22 @@ export async function logoutUser(userId: string): Promise<UserRow | null> {
     return result.rows[0] || null;
   } catch (error: unknown) {
     console.log("error while logging out user", error);
+    throw error;
+  }
+}
+
+//verifing user refresh token and then assigning new access token
+export async function refreshTokenVerification(
+  refresh_token: string,
+): Promise<UserRow | null> {
+  try {
+    const result: QueryResult<UserRow> = await pool.query(
+      `select id,email,first_name,last_name,role,refresh_token,created_at from inflowapm.users where refresh_token=$1;`,
+      [refresh_token],
+    );
+    return result.rows[0] || null;
+  } catch (error: unknown) {
+    console.log("error while finding user with given refresh token");
     throw error;
   }
 }

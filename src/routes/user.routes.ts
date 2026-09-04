@@ -1,12 +1,14 @@
 import {
   loginUserController,
   logoutUserController,
+  newAccessTokenController,
   registerUserController,
 } from "../controllers/user.controller.js";
 import app from "../app.js";
 import Router, { Application } from "express";
 import {
   loginUserValidation,
+  refreshTokenValidation,
   registerUserValidation,
 } from "../middlewares/validation.middleware.js";
 import { authRateLimit } from "../middlewares/rateLimit.middleware.js";
@@ -27,5 +29,6 @@ userRouter.post(
   loginUserController,
 );
 userRouter.post("/logout", authMiddleware, logoutUserController);
+userRouter.post("/refresh", refreshTokenValidation, newAccessTokenController);
 
 export default userRouter;
