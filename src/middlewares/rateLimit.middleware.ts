@@ -6,7 +6,7 @@ import { config } from "../configs/env.js";
 
 const customKeyGenerator = (req: Request): string => {
   if (config.node_env === "test") {
-    return `bypass=${Math.random}-${Date.now()}`;
+    return `bypass=${Math.random()}-${Date.now()}`;
   }
   return ipKeyGenerator(req.ip || "unknown-ip");
 };
