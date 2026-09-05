@@ -10,10 +10,12 @@ import {
   deleteProjectController,
   searchProjctByUserIdController,
 } from "../controllers/project.controller.js";
+import { globalRateLimit } from "../middlewares/rateLimit.middleware.js";
 
 const projectRouter: Application = Router();
 
 projectRouter.use(authMiddleware);
+projectRouter.use(globalRateLimit);
 
 //for creating project
 projectRouter.post("/", projectCreationValidation, createProjectController);

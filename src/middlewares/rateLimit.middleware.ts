@@ -4,22 +4,16 @@ import redisStore from "rate-limit-redis";
 import { Request } from "express";
 import { config } from "../configs/env.js";
 
-const customKeyGenerator = (req: Request): string => {
-  if (config.node_env === "test") {
-    return `bypass=${Math.random()}-${Date.now()}`;
-  }
-  return ipKeyGenerator(req.ip || "unknown-ip");
-};
-
 export const globalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skip: () => config.node_env === "test",
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: customKeyGenerator,
+  keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"),
   store: new redisStore({
     sendCommand: (Command: string, ...args: string[]) =>
-      redisClient.call(Command, args) as any,
+      redisClient.call(Command, ...args) as any,
     prefix: "rl:global",
   }),
   message: {
@@ -32,9 +26,10 @@ export const globalRateLimit = rateLimit({
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
+  skip: () => config.node_env === "test",
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: customKeyGenerator,
+  keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"),
   store: new redisStore({
     sendCommand: (command: string, ...args: string[]) =>
       redisClient.call(command, ...args) as any,

@@ -58,7 +58,7 @@ export async function deleteProjectModel(
       `delete from inflowapm.projects where id=$1 and user_id=$2 returning id;`,
       [id, user_id],
     );
-    return result.rows[0] || null;
+    return result.rows;
   } catch (error: unknown) {
     console.error("error while deleting project", error);
     throw error;

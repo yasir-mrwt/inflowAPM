@@ -11,7 +11,7 @@ services:
       - .env
     environment:
       - PORT=5002
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       # URL-encoded password (%40) passed down to our API code client
       - DATABASE_URL=postgresql://postgres:Aliza1965%40@inflowapm_postgres:5432/inflowapm_db
       - REDIS_URL=redis://inflowapm_redis:6379

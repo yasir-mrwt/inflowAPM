@@ -13,15 +13,15 @@ export const querySchema = z.object({
   page: z
     .string()
     .optional()
-    .transform((val) =>
-      val && !isNaN(Number(val)) ? Math.max(1, Number(val)) : 1,
-    ),
+    .transform((val) => (val && !isNaN(Number(val)) ? Number(val) : 1)),
   limit: z
     .string()
     .optional()
-    .transform((val) =>
-      val && !isNaN(Number(val)) ? Math.min(100, Math.max(1, Number(val))) : 10,
-    ),
+    .transform((val) => (val && !isNaN(Number(val)) ? Number(val) : 10)),
+  all: z
+    .string()
+    .optional()
+    .transform((val) => val === "true"),
 });
 export type QuerySchemaContract = z.infer<typeof querySchema>;
 

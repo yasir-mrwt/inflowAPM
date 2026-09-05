@@ -76,7 +76,7 @@ export async function getProjectByQueryValidation(
   if (!result.success) {
     return next(result.error);
   }
-  req.query = result.data as any;
+  res.locals.projectQuery = result.data;
   return next();
 }
 

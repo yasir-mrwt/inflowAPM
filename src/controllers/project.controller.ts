@@ -30,29 +30,30 @@ export const createProjectController = catchAsync(
 export const searchProjctByUserIdController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user) {
-      throw next(
+      return next(
         new AppError("user not authenticated to create a project ", 401),
       );
     }
-    const fetchAll = req.query.all === "true";
+    const { all: fetchAll, page, limit } = res.locals.projectQuery;
 
-    const page = fetchAll ? 1 : Number(req.query.page) || 1;
-    const limit = fetchAll ? 100000 : Number(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
+    const actualPage = fetchAll ? 1 : page;
+    const actualLimit = fetchAll ? 100000 : limit;
 
+    const offset = (actualPage - 1) * actualLimit;
     const result = await searchProjectByUserIdService(
       req.user.id,
-      limit,
+      actualLimit,
       offset,
     );
     res.status(200).json({
       success: true,
       message: `here are all the projects listed under user id:${req.user.id}`,
+      total_count: result.total_count,
       meta: {
         pagination: !fetchAll,
         ...(fetchAll ? {} : { current_page: page, page_limit: limit }),
       },
-      data: result,
+      data: result.projects, // Sends only the clean, safe array list to the client
     });
   },
 );

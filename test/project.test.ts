@@ -4,6 +4,8 @@ import app from "../src/app.js";
 import pool from "../src/configs/db.js";
 import { before, after, test } from "node:test";
 import redisClient from "../src/utils/redis.js";
+import jwt from "jsonwebtoken";
+import { config } from "../src/configs/env.js";
 
 const testUser = {
   email: `testUser-${Date.now()}@gmail.com`,
@@ -11,20 +13,41 @@ const testUser = {
   first_name: "broski",
   last_name: "codes",
 };
+const newTestUser = {
+  email: `newTestUser-${Date.now()}@gmail.com`,
+  password: `${Date.now()}YYY`,
+  first_name: "froski",
+  last_name: "codes",
+};
 let accessToken: string;
 let refreshToken: string;
 let projectName: string = `Project-${Date.now()}`;
 let invalidProjectName: string = "ab";
 let projectId: string;
+let newAccessToken: string;
 
 before(async () => {
   await supertest(app).post("/api/v1/auth/register").send(testUser).expect(201);
+  const result = await supertest(app)
+    .post("/api/v1/auth/register")
+    .send(newTestUser)
+    .expect(201);
 
   const response = await supertest(app)
     .post("/api/v1/auth/login")
     .send(testUser);
   accessToken = response.body.data.access_token;
   refreshToken = response.body.data.refresh_token;
+
+  const newResponse = await supertest(app)
+    .post("/api/v1/auth/login")
+    .send(newTestUser);
+
+  newAccessToken = jwt.sign(
+    { id: newResponse.body.id, email: newResponse.body.email },
+    config.access_token,
+    { expiresIn: "1ms" },
+  );
 });
 
 // Verify that a valid user can create post successfully.
@@ -54,6 +77,33 @@ test("/api/v1/projects - user cannot create post with invalid inputs -zod error"
   assert.strictEqual(response.body.success, false);
 });
 
+//get project successfully using page and limit
+test("/api/v1/projects?page=1&limit=10 -get projects successfully using page and limit", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/projects?page=1&limit=10")
+    .set("Authorization", `Bearer ${accessToken}`);
+  assert.strictEqual(response.status, 200);
+  assert.strictEqual(response.body.success, true);
+});
+
+//get all project successfully using all post =true
+test("/api/v1/projects?all=true  -get all projects successfully fetchAll=true", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/projects?all=true")
+    .set("Authorization", `Bearer ${accessToken}`);
+  assert.strictEqual(response.status, 200);
+  assert.strictEqual(response.body.success, true);
+});
+
+//fail getting projects using invalid token
+test("/api/v1/projects?page=1&limit=10 -fail getting projects using invalid token", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/projects?page=invalid&limit=10")
+    .set("Authorization", `Bearer ${newAccessToken}`);
+  assert.strictEqual(response.status, 401);
+  assert.strictEqual(response.body.success, false);
+});
+
 //to delete a project successfully
 test("/api/v1/projects/:id - user can delete a project successfully", async () => {
   const response = await supertest(app)
@@ -64,9 +114,19 @@ test("/api/v1/projects/:id - user can delete a project successfully", async () =
   assert.strictEqual(response.body.success, true);
 });
 
+//trying to delete a project with invalid access token
+test("/api/v1/projects/:id - user cannot delete a project with invalid access Token", async () => {
+  const response = await supertest(app)
+    .delete(`/api/v1/projects/${projectId}`)
+    .set("Authorization", `Bearer ${newAccessToken}`);
+
+  assert.strictEqual(response.status, 401);
+  assert.strictEqual(response.body.success, false);
+});
+
 after(async () => {
-  await pool.query(`delete from inflowapm.users where email=$1;`, [
-    testUser.email,
+  await pool.query(`delete from inflowapm.users where email=any($1::text[]);`, [
+    [testUser.email, newTestUser.email],
   ]);
   await pool.end();
   await redisClient.quit();
