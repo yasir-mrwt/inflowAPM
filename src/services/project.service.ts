@@ -1,4 +1,3 @@
-import { QueryResult } from "pg";
 import {
   createProjectModel,
   deleteProjectModel,

@@ -7,6 +7,7 @@
     "test": "NODE_ENV=test tsx --test",
     "test:auth": "NODE_ENV=test tsx --test test/auth.test.ts",
     "test:project": "NODE_ENV=test tsx --test test/project.test.ts",
+    "test:telemetry": "NODE_ENV=test tsx --test test/telemetry.test.ts",
     "dev": "tsx watch server.ts"
   },
   "keywords": [],

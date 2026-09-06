@@ -5,6 +5,10 @@ declare global {
         id: string;
         email: string;
       };
+      project?: {
+        id: string;
+        user_id: string;
+      };
     }
   }
 }

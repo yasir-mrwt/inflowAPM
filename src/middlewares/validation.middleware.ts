@@ -9,6 +9,7 @@ import {
   projectSchema,
   querySchema,
 } from "../schemas/project.schema.js";
+import { telemetrySchema } from "../schemas/telemetry.schema.js";
 
 //validation middleware for registering user data
 export async function registerUserValidation(
@@ -91,5 +92,19 @@ export async function projectIdValidation(
     return next(result.error);
   }
   req.params.id = result.data.id as any;
+  return next();
+}
+
+//validation middleware for ingest telemetry post
+export async function telemetryValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = telemetrySchema.safeParse(req.body);
+  if (!result.success) {
+    return next(result.error);
+  }
+  req.body = result.data;
   return next();
 }

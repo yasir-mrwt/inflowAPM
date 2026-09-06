@@ -7,10 +7,10 @@ import { config } from "../configs/env.js";
 export const globalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  skip: () => config.node_env === "test",
+  skip: () => config.node_env === "test", //directly skips the rate limit when the node env is test
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"),
+  keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"), //key generator
   store: new redisStore({
     sendCommand: (Command: string, ...args: string[]) =>
       redisClient.call(Command, ...args) as any,
@@ -26,7 +26,7 @@ export const globalRateLimit = rateLimit({
 export const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  skip: () => config.node_env === "test",
+  skip: () => config.node_env === "test", //directly skips the rate limit when the node env is test
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"),

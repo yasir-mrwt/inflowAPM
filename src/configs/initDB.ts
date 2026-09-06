@@ -28,24 +28,28 @@ export async function initializedDB(): Promise<void> {
             created_at timestamp with time zone not null default current_timestamp 
             );`);
 
-    //events table
-    await pool.query(`create table if not exists inflowapm.telemetry_events(
-            id bigserial ,
-            project_id uuid not null references inflowapm.projects(id) on delete cascade,
-            route text not null,
-            status int not null,
-            method text not null,
-            duration int not null,
-            timestamp timestamp with time zone not null default current_timestamp 
-            );`);
+    //telemetry events table
+    await pool.query(`create table if not exists inflowapm.telemetry_events (
+    id bigint generated always as identity primary key,
+    project_id uuid not null references inflowapm.projects(id) on delete cascade,
+    type varchar(50) not null,
+    route text,
+    method varchar(10),
+    status integer,
+    duration_ms double precision,
+    metadata jsonb not null default '{}'::jsonb,
+    occurred_at timestamptz not null,
+    ingested_at timestamptz not null default current_timestamp
+);
+`);
 
     // Crucial High-Scale Performance Indexes
     await pool.query(
-      `create index if not exists idx_telemetry_query_feed on inflowapm.telemetry_events(project_id,timestamp desc);`,
+      `create index if not exists idx_telemetry_query_feed on inflowapm.telemetry_events(project_id, occurred_at desc);`,
     );
 
     await pool.query(
-      `create index if not exists idx_telemetry_aggregation on inflowapm.telemetry_events(project_id,route,timestamp desc);`,
+      `create index if not exists idx_telemetry_aggregation on inflowapm.telemetry_events(project_id,route,occurred_at desc);`,
     );
 
     console.log(
