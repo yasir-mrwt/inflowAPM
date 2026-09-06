@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test tsx --test",
-    "test:auth": "NODE_ENV=test tsx --test test/auth.test.ts",
-    "test:project": "NODE_ENV=test tsx --test test/project.test.ts",
-    "test:telemetry": "NODE_ENV=test tsx --test test/telemetry.test.ts",
+    "test": "docker compose exec api env NODE_ENV=test npx tsx --test",
+    "test:auth": "docker compose exec api env NODE_ENV=test npx tsx --test test/auth.test.ts",
+    "test:project": "docker compose exec api env NODE_ENV=test npx tsx --test test/project.test.ts",
+    "test:telemetry": "docker compose exec api env NODE_ENV=test npx tsx --test test/telemetry.test.ts",
     "dev": "tsx watch server.ts"
   },
   "keywords": [],

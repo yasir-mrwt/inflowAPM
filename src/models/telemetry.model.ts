@@ -8,6 +8,10 @@ export interface CreateTelemetyEvent {
   status: string;
   duration_ms: number;
   metadata: string;
+  user_id: string;
+  anonymous_id: string;
+  email: string;
+  ip: string;
   occurred_at: Date;
 }
 
@@ -19,7 +23,7 @@ export async function createTelemetryModel(
   try {
     if (events.length === 0) return; //if no values passed return it
 
-    const columnCount = 8; //the number or values we are working/inserting with 1 for project id and rest 7 other values
+    const columnCount = 12; //the number or values we are working/inserting with 1 for project id and rest 7 other values
     const placeHolder: any[] = []; //empty spaces for the data
     const flatValues: any[] = []; //the actual data to be put onto the spaces created
 
@@ -28,7 +32,8 @@ export async function createTelemetryModel(
 
       placeHolder.push(
         `($${currentOffset + 1},$${currentOffset + 2},$${currentOffset + 3},$${currentOffset + 4},
-        $${currentOffset + 5},$${currentOffset + 6},$${currentOffset + 7},$${currentOffset + 8})`,
+        $${currentOffset + 5},$${currentOffset + 6},$${currentOffset + 7},$${currentOffset + 8},
+        $${currentOffset + 9},$${currentOffset + 10},$${currentOffset + 11},$${currentOffset + 12})`,
       );
       flatValues.push(
         project_id,
@@ -38,10 +43,14 @@ export async function createTelemetryModel(
         items.status,
         items.duration_ms,
         items.metadata,
+        items.user_id,
+        items.anonymous_id,
+        items.email,
+        items.ip,
         items.occurred_at,
       );
     });
-    const finalQuery = `insert into inflowapm.telemetry_events (project_id,type,route,method,status,duration_ms,metadata,occurred_at) values ${placeHolder.join(",")};`;
+    const finalQuery = `insert into inflowapm.telemetry_events (project_id,type,route,method,status,duration_ms,metadata,user_id,anonymous_id,email,ip,occurred_at) values ${placeHolder.join(",")};`;
     await pool.query(finalQuery, flatValues);
   } catch (error: unknown) {
     console.log("ever while creating telemetry event");

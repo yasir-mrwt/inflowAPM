@@ -38,6 +38,12 @@ export async function initializedDB(): Promise<void> {
     status integer,
     duration_ms double precision,
     metadata jsonb not null default '{}'::jsonb,
+
+    user_id varchar(255),       
+    anonymous_id varchar(255), 
+    email text,                
+    ip varchar(45),           
+    
     occurred_at timestamptz not null,
     ingested_at timestamptz not null default current_timestamp
 );

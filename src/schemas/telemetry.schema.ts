@@ -2,6 +2,13 @@ import { z } from "zod";
 
 const metadataSchema = z.record(z.string(), z.unknown()).default({});
 
+const identityFields = {
+  user_id: z.string().max(255).optional(),
+  anonymous_id: z.string().max(255).optional(),
+  email: z.email().optional(),
+  ip: z.union([z.ipv4(), z.ipv6()]).optional(),
+};
+
 // HTTP request telemetry
 
 const httpTelemetrySchema = z.object({
@@ -17,6 +24,8 @@ const httpTelemetrySchema = z.object({
 
   metadata: metadataSchema,
 
+  ...identityFields, //merging identity field
+
   occurred_at: z.iso.datetime(),
 });
 
@@ -30,6 +39,8 @@ const eventTelemetrySchema = z.object({
   duration_ms: z.number().nonnegative().optional(),
 
   metadata: metadataSchema,
+
+  ...identityFields,
 
   occurred_at: z.iso.datetime(),
 });

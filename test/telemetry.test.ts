@@ -22,20 +22,22 @@ const telemetryBatchPayload = [
     method: "POST",
     status: 200,
     duration_ms: 45.2,
-    metadata: {
-      ip: "127.0.0.1",
-      user_agent: "Mozilla/5.0",
-    },
+    metadata: { ip: "127.0.0.1", user_agent: "Mozilla/5.0" },
+    user_id: "user_995", // 🟢 Phase 2 Identity Added
+    anonymous_id: "anon_fingerprint_xyz", // 🟢 Phase 2 Identity Added
+    email: "yasir@codes.com", // 🟢 Phase 2 Identity Added
+    ip: "127.0.0.1", // 🟢 Phase 2 Identity Added
     occurred_at: new Date().toISOString(),
   },
   {
     type: "event",
-    route: "query", // Reuses route column for operation identifiers
+    route: "query",
     duration_ms: 12.4,
-    metadata: {
-      query_text: "SELECT * FROM inflowapm.users WHERE id = $1",
-      rows_returned: 1,
-    },
+    metadata: { query_text: "SELECT * FROM inflowapm.users" },
+    user_id: "user_995", // 🟢 Phase 2 Identity Added
+    anonymous_id: "anon_fingerprint_xyz", // 🟢 Phase 2 Identity Added
+    email: "yasir@codes.com", // 🟢 Phase 2 Identity Added
+    ip: "127.0.0.1", // 🟢 Phase 2 Identity Added
     occurred_at: new Date().toISOString(),
   },
 ];
