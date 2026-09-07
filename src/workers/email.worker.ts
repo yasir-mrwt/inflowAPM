@@ -45,3 +45,8 @@ emailWorker.on("failed", (job, err) => {
     err,
   );
 });
+
+//listener to worker completion
+emailWorker.on("completed", (job, result) => {
+  console.log(`Telemetry job ${job.id} completed successfully`);
+});

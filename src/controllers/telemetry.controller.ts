@@ -10,9 +10,10 @@ export const createTelemetryController = catchAsync(
 
     await createTelemetryService(project_id, validateBatchArray);
 
-    res.status(201).json({
+    //202 response to user thats his data is written but its actually being processed in background
+    res.status(202).json({
       success: true,
-      message: `Successfully ingested telemetry batch matrix of ${req.body.length} events`,
+      message: `Telemetry batch of ${req.body.length} events accepted for processing`,
     });
   },
 );

@@ -6,6 +6,7 @@ import { Request, Response, NextFunction } from "express";
 import { globalErrorMiddleware } from "./middlewares/error.middleware.js";
 import projectRouter from "./routes/project.routes.js";
 import telemetryRouter from "./routes/telemetry.routes.js";
+import "./workers/telemetry.worker.js";
 
 const app: Application = express();
 

@@ -53,7 +53,7 @@ export async function createTelemetryModel(
     const finalQuery = `insert into inflowapm.telemetry_events (project_id,type,route,method,status,duration_ms,metadata,user_id,anonymous_id,email,ip,occurred_at) values ${placeHolder.join(",")};`;
     await pool.query(finalQuery, flatValues);
   } catch (error: unknown) {
-    console.log("ever while creating telemetry event");
+    console.log("error while creating telemetry event");
     throw error;
   }
 }
