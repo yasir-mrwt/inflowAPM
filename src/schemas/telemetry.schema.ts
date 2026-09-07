@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const metadataSchema = z.record(z.string(), z.unknown()).default({});
 
+//for user identity fields
 const identityFields = {
   user_id: z.string().max(255).optional(),
   anonymous_id: z.string().max(255).optional(),
@@ -10,7 +11,6 @@ const identityFields = {
 };
 
 // HTTP request telemetry
-
 const httpTelemetrySchema = z.object({
   type: z.literal("http"),
 
@@ -30,7 +30,6 @@ const httpTelemetrySchema = z.object({
 });
 
 // Application/event telemetry
-
 const eventTelemetrySchema = z.object({
   type: z.literal("event"),
 
@@ -50,6 +49,8 @@ export const telemetrySchemaData = z.discriminatedUnion("type", [
   httpTelemetrySchema,
   eventTelemetrySchema,
 ]);
+
+//making all the events values to be in an array with minimum 1 value
 export const telemetrySchema = z
   .array(telemetrySchemaData)
   .min(1, "Batch array cannot be empty");

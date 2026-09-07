@@ -55,7 +55,7 @@ export async function deleteProjectModel(
 ): Promise<any[]> {
   try {
     const result = await pool.query(
-      `delete from inflowapm.projects where id=$1 and user_id=$2 returning id;`,
+      `delete from inflowapm.projects where id=$1 and user_id=$2 returning id,api_key;`,
       [id, user_id],
     );
     return result.rows;

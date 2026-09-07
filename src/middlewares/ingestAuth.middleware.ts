@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError.js";
 import { validateProjectApiKeyModel } from "../models/project.model.js";
+import redisClient from "../utils/redis.js";
+import { json } from "zod";
 
 //middleware to validate api key directly check the key if valid or not
 export async function ingestAuthMiddleware(
@@ -18,6 +20,15 @@ export async function ingestAuthMiddleware(
   }
   const api_key = parts[1]; //taking second part only
 
+  //first just create where to store the cache -folder structure
+  const cacheKey = `projects:apikey:check:${api_key}`;
+
+  //get all values from there if any
+  const cacheData = await redisClient.get(cacheKey);
+  if (cacheData) {
+    (req as any).project = JSON.parse(cacheData);
+    return next();
+  }
   const result = await validateProjectApiKeyModel(api_key);
   if (!result) {
     throw new AppError(
@@ -25,6 +36,9 @@ export async function ingestAuthMiddleware(
       401,
     );
   }
+  //if no values found then save values there
+  await redisClient.set(cacheKey, JSON.stringify(result), "EX", 300);
+
   (req as any).project = result;
   return next();
 }

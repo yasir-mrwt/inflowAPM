@@ -23,10 +23,11 @@ const telemetryBatchPayload = [
     status: 200,
     duration_ms: 45.2,
     metadata: { ip: "127.0.0.1", user_agent: "Mozilla/5.0" },
-    user_id: "user_995", // 🟢 Phase 2 Identity Added
-    anonymous_id: "anon_fingerprint_xyz", // 🟢 Phase 2 Identity Added
-    email: "yasir@codes.com", // 🟢 Phase 2 Identity Added
-    ip: "127.0.0.1", // 🟢 Phase 2 Identity Added
+    // Phase 2 Identity Added
+    user_id: "user_995",
+    anonymous_id: "anon_fingerprint_xyz",
+    email: "yasir@codes.com",
+    ip: "127.0.0.1",
     occurred_at: new Date().toISOString(),
   },
   {
@@ -34,14 +35,16 @@ const telemetryBatchPayload = [
     route: "query",
     duration_ms: 12.4,
     metadata: { query_text: "SELECT * FROM inflowapm.users" },
-    user_id: "user_995", // 🟢 Phase 2 Identity Added
-    anonymous_id: "anon_fingerprint_xyz", // 🟢 Phase 2 Identity Added
-    email: "yasir@codes.com", // 🟢 Phase 2 Identity Added
-    ip: "127.0.0.1", // 🟢 Phase 2 Identity Added
+    // Phase 2 Identity Added
+    user_id: "user_995",
+    anonymous_id: "anon_fingerprint_xyz",
+    email: "yasir@codes.com",
+    ip: "127.0.0.1",
     occurred_at: new Date().toISOString(),
   },
 ];
 
+//this section will execute before running the tests
 before(async () => {
   await supertest(app).post("/api/v1/auth/register").send(testUser);
 
@@ -92,6 +95,7 @@ test("/api/v1/telemetry/ingest -validating wrong payload and stopping user from 
   assert.strictEqual(response.body.success, false);
 });
 
+//this section will be executed after all the test are done
 after(async () => {
   await pool.query(`delete from inflowapm.users where email=$1;`, [
     testUser.email,

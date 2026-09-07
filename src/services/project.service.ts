@@ -7,6 +7,7 @@ import {
 } from "../models/project.model.js";
 import { AppError } from "../utils/AppError.js";
 import crypto from "node:crypto";
+import redisClient from "../utils/redis.js";
 
 //remove api key from the project row interface and create a new interface so that when searching it dont show api key
 export type ProjectSafe = Omit<ProjectRow, "api_key">;
@@ -56,6 +57,10 @@ export async function deleteProjectService(
   if (result.length === 0) {
     throw new AppError("no project found with this given id", 404);
   }
+  //as we are returning directly result.rows in our model so we will get those values
+  const api_key = result[0].api_key; //get the api key
+  const cacheKey = `projects:apikey:check:${api_key}`; //pass it too the project folder to get exactly that same thing
+  await redisClient.del(cacheKey); //delete the cache
   return result as any;
 }
 
