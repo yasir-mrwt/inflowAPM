@@ -21,7 +21,7 @@ export async function createProjectService(
   const result = await createProjectModel(name, secureKey, user_id);
 
   if (!result) {
-    throw new AppError("error while creating project just your inputs", 400);
+    throw new AppError("error while creating project check your inputs", 400);
   }
   return result;
 }

@@ -7,6 +7,7 @@ import { globalErrorMiddleware } from "./middlewares/error.middleware.js";
 import projectRouter from "./routes/project.routes.js";
 import telemetryRouter from "./routes/telemetry.routes.js";
 import "./workers/telemetry.worker.js";
+import analyticsRouter from "./routes/analytics.route.js";
 
 const app: Application = express();
 
@@ -23,6 +24,9 @@ app.use("/api/v1/projects", projectRouter);
 
 //for telemety routes
 app.use("/api/v1/telemetry", telemetryRouter);
+
+//for analytics routes
+app.use("/api/v1/telemetry/analytics", analyticsRouter);
 
 //for wrong path - it will throw error
 app.all("*paths", (req: Request, res: Response, next: NextFunction) => {

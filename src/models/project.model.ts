@@ -65,6 +65,33 @@ export async function deleteProjectModel(
   }
 }
 
+export interface SearchProjectbyProjectId {
+  id: string;
+  name: string;
+  user_id: string;
+  created_at: Date;
+}
+
+//search project by project id
+export async function searchProjectByProjectIdModel(
+  project_id: string,
+): Promise<SearchProjectbyProjectId | null> {
+  try {
+    const result = await pool.query(
+      ` SELECT id, name, user_id, created_at
+        FROM inflowapm.projects
+        WHERE id = $1;
+      `,
+      [project_id],
+    );
+
+    return result.rows[0] ?? null;
+  } catch (error: unknown) {
+    console.error("error while searching for project using project id", error);
+    throw error;
+  }
+}
+
 export interface ValidateProject {
   id: string;
   user_id: string;
