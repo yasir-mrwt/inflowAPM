@@ -1,69 +1,77 @@
-version: "3.8"
-
 services:
-  # 🟢 1. REPRODUCIBLE NODE.JS EXPRESS API BACKEND SERVICE
+  # Node.js Express API backend service
   api:
-    build: .
+    build: ./backend
     container_name: inflowapm_api
     ports:
       - "5002:5002"
-    env_file:
-      - .env
-    environment:
-      - PORT=5002
-      - NODE_ENV=${NODE_ENV}
-      # URL-encoded password (%40) passed down to our API code client
-      - DATABASE_URL=postgresql://postgres:Aliza1965%40@inflowapm_postgres:5432/inflowapm_db
-      - REDIS_URL=redis://inflowapm_redis:6379
-      - ACCESS_TOKEN_SECRET=random_access_token_of_user_1234567890
-      - REFRESH_TOKEN_SECRET=random_refresh_token_of_user_1234567890
 
-      - MAIL_HOST=${MAIL_HOST}
-      - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USER=${MAIL_USER}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
-      - MAIL_FROM=${MAIL_FROM}
+    env_file:
+      - ./backend/.env
+
+    environment:
+      PORT: 5002
+      NODE_ENV: ${NODE_ENV:-development}
+
+      DATABASE_URL: postgresql://postgres:Aliza1965%40@inflowapm_postgres:5432/inflowapm_db
+      REDIS_URL: redis://inflowapm_redis:6379
+
+      ACCESS_TOKEN_SECRET: random_access_token_of_user_1234567890
+      REFRESH_TOKEN_SECRET: random_refresh_token_of_user_1234567890
 
     depends_on:
       postgres:
-        condition: service_healthy # 🟢 Tells API to wait until Postgres says "I'm fully initialized!"
+        condition: service_healthy
       redis:
         condition: service_started
+
     volumes:
-      - .:/usr/src/app
+      # Mount only the backend source code into the API container.
+      - ./backend:/usr/src/app
+
+      # Keep container dependencies isolated from the host node_modules directory.
       - /usr/src/app/node_modules
+
     command: npx tsx watch src/server.ts
 
-  # 🔵 2. PRE-BAKED RELATIONAL POSTGRESQL DATABASE ENGINE
+  # PostgreSQL database service
   postgres:
-    image: postgres:18-alpine # 🟢 Updated: Pulls the official PostgreSQL 18 build natively!
+    image: postgres:18-alpine
     container_name: inflowapm_postgres
     restart: always
+
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Aliza1965@ # 🟢 Updated: Injects your exact password securely into the database container!
+      POSTGRES_PASSWORD: Aliza1965@
       POSTGRES_DB: inflowapm_db
+
     expose:
       - "5432"
+
     volumes:
+      # Persist PostgreSQL data across container restarts.
       - pgdata:/var/lib/postgresql
-    # 🟢 ADD THIS HEALTHCHECK LOCK BLOCK FOR POSTGRES 18+:
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d inflowapm_db"]
       interval: 3s
       timeout: 3s
       retries: 5
-  # 🔴 3. PRE-BAKED HIGH-SPEED REDIS CACHE ENGINE
+
+  # Redis cache and BullMQ backing service
   redis:
     image: redis:7-alpine
     container_name: inflowapm_redis
     restart: always
+
     expose:
       - "6379"
+
     volumes:
+      # Persist Redis data across container restarts.
       - redisdata:/data
 
-# 🔒 PHYSICAL MAC HDD PERSISTENT ENVELOPES VAULT
+# Persistent Docker volumes
 volumes:
   pgdata:
   redisdata:
