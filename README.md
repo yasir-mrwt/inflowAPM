@@ -1,6 +1,6 @@
 # InflowAPM
 
-InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. The web application is currently only a generated Next.js scaffold; the product UI is planned.
+InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. Its Next.js frontend now provides the shared visual system and responsive public marketing shell; product pages, authentication screens, and the analytics dashboard remain planned.
 
 ## Current status
 
@@ -12,7 +12,8 @@ InflowAPM is an open-source application performance monitoring project. Its back
 | Batched telemetry ingestion | Implemented |
 | BullMQ telemetry processing and PostgreSQL bulk insert | Implemented |
 | Dashboard analytics | Implemented |
-| Frontend product experience | Planned |
+| Frontend design system and public marketing shell | Implemented |
+| Homepage product content and authenticated dashboard | Planned |
 | CI/CD and production deployment | Planned |
 
 The backend integration tests exercise authentication, projects, ingestion, analytics, tenant isolation, safety bounds, and test-infrastructure isolation. Tests use a dedicated PostgreSQL database and Redis database.
@@ -67,8 +68,17 @@ An additional BullMQ worker sends registration welcome emails through SMTP.
 - React 19
 - TypeScript
 - Tailwind CSS 4
+- Instrument Sans and IBM Plex Mono through `next/font`
+- shadcn-style typed component primitives
+- Lucide React interface icons
 
-The frontend is still a scaffold. shadcn/ui, Lucide React, Recharts, and other product libraries are planned and have not been installed.
+The frontend uses semantic CSS design tokens, reusable button/surface/brand primitives, and a route-group marketing layout. Recharts and data-fetching/form libraries remain planned and will be introduced only when their product phases require them.
+
+### Frontend architecture
+
+Public pages live in an App Router `(marketing)` route group so they share the navigation and footer without forcing those elements into future authenticated dashboard routes. The page and layout remain Server Components by default. Only the responsive navbar is a Client Component because dropdown state, scroll behavior, Escape handling, and mobile focus management require browser APIs.
+
+The visual system is intentionally dark and restrained: graphite/steel neutrals form the interface, cyan identifies brand actions, and green/amber/red retain stable telemetry meanings. Instrument Sans is used for human-facing UI; IBM Plex Mono is reserved for machine values such as routes, latency, identifiers, timestamps, and code.
 
 ## Repository structure
 
@@ -88,7 +98,15 @@ InflowAPM/
 │   └── test/
 ├── frontend/
 │   ├── public/
-│   └── src/app/
+│   └── src/
+│       ├── app/
+│       │   └── (marketing)/
+│       ├── components/
+│       │   ├── brand/
+│       │   ├── icons/
+│       │   ├── marketing/
+│       │   └── ui/
+│       └── lib/
 ├── docker-compose.yml
 └── README.md
 ```
@@ -127,7 +145,7 @@ npm run dev
 
 The API listens on the configured `PORT`. The checked-in Docker configuration uses port `5002`.
 
-To inspect the current frontend scaffold separately:
+To run the current frontend separately:
 
 ```bash
 cd frontend
@@ -298,12 +316,13 @@ Authorization: Bearer <token-or-project-api-key>
 
 ## Roadmap
 
-### Frontend handoff
+### Frontend status
 
-Backend stabilization has been validated with two consecutive full-suite passes. Frontend work starts only after explicit user approval.
+The frontend foundation includes its design tokens, typography, base UI primitives, approved logo treatment, responsive public navigation, dropdown architecture, mobile menu, and footer shell. The current root page remains a temporary design-system specimen until the homepage product-introduction phase replaces it.
 
 ### Planned frontend
 
+- Homepage product introduction and supporting product story
 - Authentication screens and session handling
 - Project creation and selection
 - API-key onboarding experience
