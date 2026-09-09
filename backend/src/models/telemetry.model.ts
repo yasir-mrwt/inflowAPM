@@ -1,31 +1,17 @@
-import { QueryResult } from "pg";
 import pool from "../configs/db.js";
-
-export interface CreateTelemetyEvent {
-  type: string;
-  route: string;
-  method: string;
-  status: string;
-  duration_ms: number;
-  metadata: string;
-  user_id: string;
-  anonymous_id: string;
-  email: string;
-  ip: string;
-  occurred_at: Date;
-}
+import type { TelemetrySchemaContract } from "../schemas/telemetry.schema.js";
 
 // create telemetry events  model  -> function first for bulk insertion
 export async function createTelemetryModel(
   project_id: string,
-  events: any[],
+  events: TelemetrySchemaContract,
 ): Promise<void> {
   try {
     if (events.length === 0) return; //if no values passed return it
 
     const columnCount = 12; //the number or values we are working/inserting with 1 for project id and rest 7 other values
-    const placeHolder: any[] = []; //empty spaces for the data
-    const flatValues: any[] = []; //the actual data to be put onto the spaces created
+    const placeHolder: string[] = []; //empty spaces for the data
+    const flatValues: unknown[] = []; //the actual data to be put onto the spaces created
 
     events.forEach((items, index) => {
       const currentOffset = index * columnCount;
@@ -39,8 +25,8 @@ export async function createTelemetryModel(
         project_id,
         items.type,
         items.route,
-        items.method,
-        items.status,
+        items.type === "http" ? items.method : null,
+        items.type === "http" ? items.status : null,
         items.duration_ms,
         items.metadata,
         items.user_id,

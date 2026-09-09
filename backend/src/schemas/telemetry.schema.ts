@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const MAX_TELEMETRY_BATCH_SIZE = 100;
+
 const metadataSchema = z.record(z.string(), z.unknown()).default({});
 
 //for user identity fields
@@ -53,6 +55,10 @@ export const telemetrySchemaData = z.discriminatedUnion("type", [
 //making all the events values to be in an array with minimum 1 value
 export const telemetrySchema = z
   .array(telemetrySchemaData)
-  .min(1, "Batch array cannot be empty");
+  .min(1, "Batch array cannot be empty")
+  .max(
+    MAX_TELEMETRY_BATCH_SIZE,
+    `Batch cannot contain more than ${MAX_TELEMETRY_BATCH_SIZE} events`,
+  );
 
 export type TelemetrySchemaContract = z.infer<typeof telemetrySchema>;

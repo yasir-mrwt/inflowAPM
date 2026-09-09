@@ -1,9 +1,15 @@
 import app from "./app.js";
 import { config } from "./configs/env.js";
-import { verifyMailConnection } from "./configs/mail.config.js";
-import "./workers/email.worker.js";
+import { initializedDB } from "./configs/initDB.js";
 
-await verifyMailConnection();
+await initializedDB();
+await import("./workers/telemetry.worker.js");
+
+if (config.mail_enabled) {
+  const { verifyMailConnection } = await import("./configs/mail.config.js");
+  await verifyMailConnection();
+  await import("./workers/email.worker.js");
+}
 
 const port = config.port;
 

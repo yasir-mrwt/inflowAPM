@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "docker compose exec api env NODE_ENV=test npx tsx --test",
+    "test": "NODE_ENV=test tsx --test --test-concurrency=1 test/*.test.ts",
     "test:auth": "docker compose exec api env NODE_ENV=test npx tsx --test test/auth.test.ts",
     "test:project": "docker compose exec api env NODE_ENV=test npx tsx --test test/project.test.ts",
     "test:telemetry": "docker compose exec api env NODE_ENV=test npx tsx --test test/telemetry.test.ts",
     "test:analytics": "docker compose exec api env NODE_ENV=test npx tsx --test test/analytics.test.ts",
-    "dev": "tsx watch server.ts"
+    "dev": "tsx watch src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,6 @@
   "type": "module",
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.4.1",
@@ -40,6 +39,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/nodemailer": "^8.0.1",
     "@types/rate-limit-redis": "^1.7.4",
     "@types/supertest": "^7.2.1"

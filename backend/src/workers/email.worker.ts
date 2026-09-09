@@ -9,7 +9,7 @@ export const emailWorker = new Worker<WelcomeEmailJobPayload>(
   async (job: Job<WelcomeEmailJobPayload>) => {
     const { email, first_name } = job.data;
     console.log(
-      `✉️  Processing background mail delivery task for job reference ID: ${job.id}`,
+      ` Processing background mail delivery task for job reference ID: ${job.id}`,
     );
 
     // Compile your custom system outflow welcome message
@@ -48,5 +48,5 @@ emailWorker.on("failed", (job, err) => {
 
 //listener to worker completion
 emailWorker.on("completed", (job, result) => {
-  console.log(`Telemetry job ${job.id} completed successfully`);
+  console.log(`Email job ${job.id} completed successfully`);
 });

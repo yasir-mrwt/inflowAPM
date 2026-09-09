@@ -3,20 +3,17 @@ import {
   checkUserData,
   registerUserModel,
   UserRow,
-  saveRefreshToken,
   logoutUser,
   refreshTokenVerification,
 } from "../models/user.model.js";
 import {
   LoginUserContract,
-  RefreshTokenContract,
   RegisterUserContract,
 } from "../schemas/user.schema.js";
 import { AppError } from "../utils/AppError.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { config } from "../configs/env.js";
-import { emailQueue } from "../queues/email.queue.js";
 
 export async function registerUserService(
   payload: RegisterUserContract,
@@ -34,16 +31,25 @@ export async function registerUserService(
     payload.last_name,
   );
 
-  await emailQueue.add("emailQueue", {
-    email: payload.email,
-    first_name: payload.first_name,
-  });
+  //would avoid sending emails during test -check if its in testing or not
+  if (config.mail_enabled) {
+    try {
+      const { emailQueue } = await import("../queues/email.queue.js");
+
+      await emailQueue.add("emailQueue", {
+        email: payload.email,
+        first_name: payload.first_name,
+      });
+    } catch (error) {
+      console.error("Failed to enqueue welcome email:", error);
+    }
+  }
   return result;
 }
 
 export async function LoginUserService(
   payload: LoginUserContract,
-): Promise<UserRow | null> {
+): Promise<checkUserData> {
   const { email, password } = payload;
   const ifUser = await checkUser(email);
   if (!ifUser) {
@@ -51,9 +57,6 @@ export async function LoginUserService(
       "no user found with this email address please verify it",
       401,
     );
-  }
-  if (ifUser.refresh_token !== null) {
-    throw new AppError("user already logged in", 401);
   }
   const comparePassword = await bcrypt.compare(password, ifUser.password);
   if (!comparePassword) {
@@ -64,15 +67,6 @@ export async function LoginUserService(
   }
 
   return ifUser;
-}
-
-//save the refresh token when user login
-export async function saveRefreshTokenService(
-  payLoad: RefreshTokenContract,
-  userId: string,
-): Promise<UserRow | null> {
-  const result = await saveRefreshToken(payLoad.refresh_token, userId);
-  return result;
 }
 
 //logout user controller

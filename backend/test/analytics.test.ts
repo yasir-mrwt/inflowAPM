@@ -6,6 +6,7 @@ import app from "../src/app.js";
 import redisClient from "../src/utils/redis.js";
 import { telemetryIngestionQueue } from "../src/queues/telemetry.queue.js";
 import { telemetryWorker } from "../src/workers/telemetry.worker.js";
+import { initializedDB } from "../src/configs/initDB.js";
 
 const testUser = {
   email: `testUser-${Date.now()}@gmail.com`,
@@ -65,12 +66,23 @@ const telemetryBatchPayload = [
     ip: "127.0.0.1",
     occurred_at: new Date().toISOString(),
   },
+  {
+    type: "http",
+    route: "/api/old-failure",
+    method: "GET",
+    status: 503,
+    duration_ms: 120,
+    metadata: { error_message: "Historical failure" },
+    email: testUser.email,
+    occurred_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+  },
 ];
 
 // Prepare users, authentication tokens, and a project before running the tests.
 before(async () => {
+  await initializedDB();
   // Clear Redis state to prevent previous test runs from affecting the current suite.
-  await redisClient.flushall();
+  await redisClient.flushdb();
 
   // Register the primary project owner.
   await supertest(app).post("/api/v1/auth/register").send(testUser);
@@ -115,7 +127,7 @@ async function waitForTelemetry(email: string) {
     );
 
     // Return once both telemetry events have been written to the database.
-    if (result.rows.length >= 2) {
+    if (result.rows.length >= telemetryBatchPayload.length) {
       return result.rows;
     }
 
@@ -141,7 +153,7 @@ test("POST /api/v1/telemetry/ingest accepts and persists a valid telemetry batch
   const rows = await waitForTelemetry(testUser.email);
 
   // Confirm that every event from the submitted batch was stored successfully.
-  assert.strictEqual(rows.length, 2);
+  assert.strictEqual(rows.length, telemetryBatchPayload.length);
 });
 
 // Verify that the project owner receives correctly aggregated dashboard metrics.
@@ -158,9 +170,45 @@ test("GET /api/v1/telemetry/analytics/dashboard returns accurate analytics for t
   assert.strictEqual(response.statusCode, 200);
 
   // Confirm that the overview metrics match the telemetry inserted during the test.
-  assert.strictEqual(response.body.data.overview.total_requests, 2);
+  assert.strictEqual(response.body.data.overview.total_requests, 1);
 
   assert.strictEqual(response.body.data.overview.total_errors, 1);
+});
+
+test("GET /api/v1/telemetry/analytics/dashboard limits recent errors to the selected range", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/telemetry/analytics/dashboard")
+    .query({ project_id, range: "1h" })
+    .set("Authorization", `Bearer ${accessToken}`);
+
+  assert.strictEqual(response.statusCode, 200);
+  assert.strictEqual(response.body.data.recent_errors.length, 1);
+  assert.strictEqual(
+    response.body.data.recent_errors.some(
+      (error: { route: string }) => error.route === "/api/old-failure",
+    ),
+    false,
+  );
+});
+
+test("GET /api/v1/telemetry/analytics/dashboard rejects an invalid project UUID", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/telemetry/analytics/dashboard")
+    .query({ project_id: "not-a-uuid", range: "24h" })
+    .set("Authorization", `Bearer ${accessToken}`);
+
+  assert.strictEqual(response.statusCode, 400);
+  assert.strictEqual(response.body.success, false);
+});
+
+test("GET /api/v1/telemetry/analytics/dashboard rejects an invalid range", async () => {
+  const response = await supertest(app)
+    .get("/api/v1/telemetry/analytics/dashboard")
+    .query({ project_id, range: "90d" })
+    .set("Authorization", `Bearer ${accessToken}`);
+
+  assert.strictEqual(response.statusCode, 400);
+  assert.strictEqual(response.body.success, false);
 });
 
 // Verify tenant isolation by preventing another authenticated user from accessing the project.
@@ -198,10 +246,11 @@ after(async () => {
   await telemetryWorker.close();
   await telemetryIngestionQueue.close();
 
-  // Remove the primary test user created for this suite.
-  await pool.query(`DELETE FROM inflowapm.users WHERE email = $1;`, [
-    testUser.email,
-  ]);
+  // Removing both users also cascades the owned project and telemetry rows.
+  await pool.query(
+    `DELETE FROM inflowapm.users WHERE email = ANY($1::text[]);`,
+    [[testUser.email, secondUser.email]],
+  );
 
   // Close PostgreSQL and Redis connections so the test process can exit cleanly.
   await pool.end();

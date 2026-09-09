@@ -12,7 +12,6 @@ import {
 import { catchAsync } from "../utils/catchAsync.js";
 import { AppError } from "../utils/AppError.js";
 import { saveRefreshToken } from "../models/user.model.js";
-import { success } from "zod";
 
 export const registerUserController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -35,10 +34,8 @@ export const loginUserController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { email, password } = req.body;
     const result = await LoginUserService({ email, password });
-    delete (result as any).password;
-    if (!result) {
-      throw new AppError("invalid input data", 401);
-    }
+    const { password: _password, refresh_token: _storedToken, ...userData } =
+      result;
     const accesToken = await generateAccessToken(result.id, result.email);
     const refreshToken = await generateRefreshToken(result.id);
     await saveRefreshToken(refreshToken, result.id);
@@ -48,7 +45,7 @@ export const loginUserController = catchAsync(
       data: {
         refresh_token: refreshToken,
         access_token: accesToken,
-        userData: result,
+        userData,
       },
     });
   },
@@ -78,7 +75,7 @@ export const newAccessTokenController = catchAsync(
     if (!result) {
       return next(new AppError("error while creating new access Token ", 500));
     }
-    const newToken = generateAccessToken(result.id, result.email);
+    const newToken = await generateAccessToken(result.id, result.email);
     res.status(200).json({
       success: true,
       message: `new access token created successfully`,

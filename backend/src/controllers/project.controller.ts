@@ -6,12 +6,13 @@ import {
 import { Response, NextFunction, Request } from "express";
 import { AppError } from "../utils/AppError.js";
 import { catchAsync } from "../utils/catchAsync.js";
+import { MAX_PROJECT_PAGE_SIZE } from "../schemas/project.schema.js";
 
 //create project controller to pass the correct response to user on success or give error if any
 export const createProjectController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user) {
-      throw next(
+      return next(
         new AppError("user not authenticated to create a project ", 401),
       );
     }
@@ -37,7 +38,7 @@ export const searchProjctByUserIdController = catchAsync(
     const { all: fetchAll, page, limit } = res.locals.projectQuery;
 
     const actualPage = fetchAll ? 1 : page;
-    const actualLimit = fetchAll ? 100000 : limit;
+    const actualLimit = fetchAll ? MAX_PROJECT_PAGE_SIZE : limit;
 
     const offset = (actualPage - 1) * actualLimit;
     const result = await searchProjectByUserIdService(
@@ -73,7 +74,7 @@ export async function deleteProjectController(
   );
   res.status(200).json({
     success: true,
-    message: `$project id:{req.params.id} has been deleted successfully`,
+    message: `Project ${req.params.id} has been deleted successfully`,
     data: result,
   });
 }

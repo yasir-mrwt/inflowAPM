@@ -10,6 +10,7 @@ import {
   querySchema,
 } from "../schemas/project.schema.js";
 import { telemetrySchema } from "../schemas/telemetry.schema.js";
+import { analyticsDashboardQuerySchema } from "../schemas/analytics.schema.js";
 
 //validation middleware for registering user data
 export async function registerUserValidation(
@@ -106,5 +107,18 @@ export async function telemetryValidation(
     return next(result.error);
   }
   req.body = result.data;
+  return next();
+}
+
+export async function analyticsDashboardQueryValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = analyticsDashboardQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    return next(result.error);
+  }
+  res.locals.analyticsQuery = result.data;
   return next();
 }

@@ -1,8 +1,12 @@
 services:
-  # Node.js Express API backend service
+  # -----------------------------
+  # Express API
+  # -----------------------------
   api:
     build: ./backend
     container_name: inflowapm_api
+    init: true
+
     ports:
       - "5002:5002"
 
@@ -11,54 +15,50 @@ services:
 
     environment:
       PORT: 5002
-      NODE_ENV: ${NODE_ENV:-development}
-
-      DATABASE_URL: postgresql://postgres:Aliza1965%40@inflowapm_postgres:5432/inflowapm_db
-      REDIS_URL: redis://inflowapm_redis:6379
-
-      ACCESS_TOKEN_SECRET: random_access_token_of_user_1234567890
-      REFRESH_TOKEN_SECRET: random_refresh_token_of_user_1234567890
+      NODE_ENV: development
 
     depends_on:
       postgres:
         condition: service_healthy
+
       redis:
         condition: service_started
 
     volumes:
-      # Mount only the backend source code into the API container.
       - ./backend:/usr/src/app
-
-      # Keep container dependencies isolated from the host node_modules directory.
       - /usr/src/app/node_modules
 
     command: npx tsx watch src/server.ts
 
-  # PostgreSQL database service
+  # -----------------------------
+  # PostgreSQL
+  # -----------------------------
   postgres:
     image: postgres:18-alpine
     container_name: inflowapm_postgres
     restart: always
 
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Aliza1965@
-      POSTGRES_DB: inflowapm_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
 
     expose:
       - "5432"
 
     volumes:
-      # Persist PostgreSQL data across container restarts.
       - pgdata:/var/lib/postgresql
+      - ./backend/docker/init-test-database.sql:/docker-entrypoint-initdb.d/10-init-test-database.sql:ro
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d inflowapm_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 3s
       timeout: 3s
       retries: 5
 
-  # Redis cache and BullMQ backing service
+  # -----------------------------
+  # Redis
+  # -----------------------------
   redis:
     image: redis:7-alpine
     container_name: inflowapm_redis
@@ -68,10 +68,8 @@ services:
       - "6379"
 
     volumes:
-      # Persist Redis data across container restarts.
       - redisdata:/data
 
-# Persistent Docker volumes
 volumes:
   pgdata:
   redisdata:
