@@ -6,6 +6,8 @@ import pool from "../src/configs/db.js";
 import redisClient from "../src/utils/redis.js";
 import jwt from "jsonwebtoken";
 import { config } from "../src/configs/env.js";
+import { emailQueue } from "../src/queues/email.queue.js";
+import { emailWorker } from "../src/workers/email.worker.js";
 
 // Primary test user used for authentication and logout verification.
 const firstUser = {
@@ -83,6 +85,14 @@ describe("Authentication Flow", { concurrency: false }, () => {
     assert.strictEqual(response.body.success, true);
     assert.strictEqual("password" in response.body.data.userData, false);
     assert.strictEqual("refreshToken" in response.body.data.userData, false);
+
+    const decoded = jwt.verify(
+      response.body.data.access_token,
+      config.access_token,
+    );
+
+    assert.ok(decoded);
+
     const userInfo = response.body.data.userData;
     newToken = jwt.sign(
       { id: userInfo.id, email: userInfo.email },
@@ -151,6 +161,8 @@ describe("Authentication Flow", { concurrency: false }, () => {
         `delete from inflowapm.users where email = any($1::text[]);`,
         [[firstUser.email, secondUser.email]],
       );
+      await emailWorker.close();
+      await emailQueue.close();
 
       await pool.end();
       await redisClient.quit();

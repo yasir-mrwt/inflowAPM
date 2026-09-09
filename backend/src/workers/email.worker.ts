@@ -9,7 +9,7 @@ export const emailWorker = new Worker<WelcomeEmailJobPayload>(
   async (job: Job<WelcomeEmailJobPayload>) => {
     const { email, first_name } = job.data;
     console.log(
-      `✉️  Processing background mail delivery task for job reference ID: ${job.id}`,
+      ` Processing background mail delivery task for job reference ID: ${job.id}`,
     );
 
     // Compile your custom system outflow welcome message

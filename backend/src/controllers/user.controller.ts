@@ -78,7 +78,7 @@ export const newAccessTokenController = catchAsync(
     if (!result) {
       return next(new AppError("error while creating new access Token ", 500));
     }
-    const newToken = generateAccessToken(result.id, result.email);
+    const newToken = await generateAccessToken(result.id, result.email);
     res.status(200).json({
       success: true,
       message: `new access token created successfully`,

@@ -25,6 +25,7 @@ const allEnvs = [
   "MAIL_USER",
   "MAIL_PASSWORD",
   "MAIL_FROM",
+  "CORS_ORIGINS",
 ];
 
 const refreshToken = process.env.REFRESH_TOKEN_SECRET || "";
@@ -46,6 +47,7 @@ if (refreshToken === accessToken) {
 let dbHost = process.env.DB_HOST || "postgres";
 let dbName = process.env.DB_NAME || "inflowapm_db";
 let redisurl = process.env.REDIS_URL || "redis://redis:6379";
+let cors_origins = process.env.CORS_ORIGINS || "http://localhost:3000";
 if (currentEnv === "test") {
   dbHost = "postgres";
   dbName = "inflowapm_db";
@@ -69,6 +71,7 @@ interface EnvConfiguration {
   mail_user: string | undefined;
   mail_password: string | undefined;
   mail_from: string | undefined;
+  cors_origins: string;
 }
 
 export const config: Readonly<EnvConfiguration> = {
@@ -88,4 +91,5 @@ export const config: Readonly<EnvConfiguration> = {
   mail_user: process.env.MAIL_USER,
   mail_password: process.env.MAIL_PASSWORD,
   mail_from: process.env.MAIL_FROM,
+  cors_origins: process.env.CORS_ORIGINS || "http://localhost:3000",
 };
