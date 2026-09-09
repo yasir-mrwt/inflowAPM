@@ -1,5 +1,6 @@
 import pool from "../configs/db.js";
-import { Query, QueryResult } from "pg";
+import { QueryResult } from "pg";
+import { hashSecret } from "../utils/hashSecret.js";
 
 //data to be returned by the model
 export interface UserRow {
@@ -56,9 +57,10 @@ export async function saveRefreshToken(
   userId: string,
 ): Promise<UserRow | null> {
   try {
+    const refreshTokenHash = hashSecret(refresh_token);
     const result: QueryResult<UserRow> = await pool.query(
       `update inflowapm.users set refresh_token=$1 where id=$2 returning id,email,first_name,last_name,role,refresh_token,created_at;`,
-      [refresh_token, userId],
+      [refreshTokenHash, userId],
     );
     return result.rows[0] || null;
   } catch (error: unknown) {
@@ -92,11 +94,25 @@ export async function refreshTokenVerification(
   refresh_token: string,
 ): Promise<UserRow | null> {
   try {
+    const refreshTokenHash = hashSecret(refresh_token);
     const result: QueryResult<UserRow> = await pool.query(
-      `select id,email,first_name,last_name,role,refresh_token,created_at from inflowapm.users where refresh_token=$1;`,
-      [refresh_token],
+      `select id,email,first_name,last_name,role,refresh_token,created_at
+       from inflowapm.users
+       where refresh_token=$1 or refresh_token=$2;`,
+      [refreshTokenHash, refresh_token],
     );
-    return result.rows[0] || null;
+    const user = result.rows[0] || null;
+
+    // Transparently upgrade a refresh token stored before hashing was enabled.
+    if (user?.refresh_token === refresh_token) {
+      await pool.query(
+        `update inflowapm.users set refresh_token=$1 where id=$2;`,
+        [refreshTokenHash, user.id],
+      );
+      user.refresh_token = refreshTokenHash;
+    }
+
+    return user;
   } catch (error: unknown) {
     console.log("error while finding user with given refresh token");
     throw error;

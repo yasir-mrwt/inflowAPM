@@ -6,8 +6,7 @@ import pool from "../src/configs/db.js";
 import redisClient from "../src/utils/redis.js";
 import jwt from "jsonwebtoken";
 import { config } from "../src/configs/env.js";
-import { emailQueue } from "../src/queues/email.queue.js";
-import { emailWorker } from "../src/workers/email.worker.js";
+import { initializedDB } from "../src/configs/initDB.js";
 
 // Primary test user used for authentication and logout verification.
 const firstUser = {
@@ -33,6 +32,12 @@ let newToken: string = "";
 describe("Authentication Flow", { concurrency: false }, () => {
   // Prepare an authenticated user before executing the test suite.
   before(async () => {
+    await initializedDB();
+    const databaseResult = await pool.query(
+      "SELECT current_database() AS database_name;",
+    );
+    assert.strictEqual(databaseResult.rows[0].database_name, "inflowapm_test");
+
     await supertest(app)
       .post("/api/v1/auth/register")
       .send(firstUser)
@@ -45,6 +50,16 @@ describe("Authentication Flow", { concurrency: false }, () => {
 
     refreshToken = loginResponse.body.data.refresh_token;
     accessToken = loginResponse.body.data.access_token;
+
+    const storedTokenResult = await pool.query(
+      `SELECT refresh_token FROM inflowapm.users WHERE email=$1;`,
+      [firstUser.email],
+    );
+    assert.notStrictEqual(
+      storedTokenResult.rows[0].refresh_token,
+      refreshToken,
+    );
+    assert.strictEqual(storedTokenResult.rows[0].refresh_token.length, 64);
   });
 
   // Verify that a valid user can register successfully.
@@ -84,7 +99,7 @@ describe("Authentication Flow", { concurrency: false }, () => {
     assert.strictEqual(response.statusCode, 200);
     assert.strictEqual(response.body.success, true);
     assert.strictEqual("password" in response.body.data.userData, false);
-    assert.strictEqual("refreshToken" in response.body.data.userData, false);
+    assert.strictEqual("refresh_token" in response.body.data.userData, false);
 
     const decoded = jwt.verify(
       response.body.data.access_token,
@@ -99,6 +114,16 @@ describe("Authentication Flow", { concurrency: false }, () => {
       config.access_token,
       { expiresIn: "1ms" },
     );
+  });
+
+  test("POST /api/v1/auth/login - permits repeated login and replaces the refresh token", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/login")
+      .send(secondUser);
+
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.body.success, true);
+    assert.strictEqual(typeof response.body.data.refresh_token, "string");
   });
 
   // Verify that malformed login credentials fail validation.
@@ -158,14 +183,14 @@ describe("Authentication Flow", { concurrency: false }, () => {
 
     try {
       await pool.query(
-        `delete from inflowapm.users where email = any($1::text[]);`,
+        `DELETE FROM inflowapm.users WHERE email = ANY($1::text[]);`,
         [[firstUser.email, secondUser.email]],
       );
-      await emailWorker.close();
-      await emailQueue.close();
 
       await pool.end();
       await redisClient.quit();
+
+      console.log("Auth cleanup completed");
     } catch (err) {
       console.error("Error during test cleanup:", err);
     }

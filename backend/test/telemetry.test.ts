@@ -6,6 +6,8 @@ import app from "../src/app.js";
 import redisClient from "../src/utils/redis.js";
 import { telemetryIngestionQueue } from "../src/queues/telemetry.queue.js";
 import { telemetryWorker } from "../src/workers/telemetry.worker.js";
+import { MAX_TELEMETRY_BATCH_SIZE } from "../src/schemas/telemetry.schema.js";
+import { initializedDB } from "../src/configs/initDB.js";
 
 const testUser = {
   email: `testUser-${Date.now()}@gmail.com`,
@@ -48,7 +50,12 @@ const telemetryBatchPayload = [
 
 //this section will execute before running the tests
 before(async () => {
-  await redisClient.flushall(); // Clear old states before test runs
+  await initializedDB();
+  const telemetryQueueClient = await telemetryIngestionQueue.getBackend().client;
+  assert.strictEqual(redisClient.options.db, 1);
+  assert.strictEqual(telemetryQueueClient.options.db, 1);
+
+  await redisClient.flushdb(); // Clear old states before test runs
   await supertest(app).post("/api/v1/auth/register").send(testUser);
 
   const response = await supertest(app)
@@ -116,6 +123,21 @@ test("/api/v1/telemetry/ingest -validating wrong payload and stopping user from 
   const response = await supertest(app)
     .post("/api/v1/telemetry/ingest")
     .send([])
+    .set("Authorization", `Bearer ${apiKey}`);
+
+  assert.strictEqual(response.statusCode, 400);
+  assert.strictEqual(response.body.success, false);
+});
+
+test("/api/v1/telemetry/ingest - rejects batches above the maximum size", async () => {
+  const oversizedBatch = Array.from(
+    { length: MAX_TELEMETRY_BATCH_SIZE + 1 },
+    () => ({ ...telemetryBatchPayload[0] }),
+  );
+
+  const response = await supertest(app)
+    .post("/api/v1/telemetry/ingest")
+    .send(oversizedBatch)
     .set("Authorization", `Bearer ${apiKey}`);
 
   assert.strictEqual(response.statusCode, 400);

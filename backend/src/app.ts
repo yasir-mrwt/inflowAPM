@@ -1,22 +1,17 @@
 import express, { Application } from "express";
-import { initializedDB } from "./configs/initDB.js";
 import userRouter from "./routes/user.routes.js";
 import { AppError } from "./utils/AppError.js";
 import { Request, Response, NextFunction } from "express";
 import { globalErrorMiddleware } from "./middlewares/error.middleware.js";
 import projectRouter from "./routes/project.routes.js";
 import telemetryRouter from "./routes/telemetry.routes.js";
-import "./workers/telemetry.worker.js";
 import analyticsRouter from "./routes/analytics.route.js";
 import cors from "cors";
-import { config } from "../src/configs/env.js";
+import { config } from "./configs/env.js";
 
 const app: Application = express();
 
 app.use(express.json());
-
-//intializing db
-await initializedDB();
 
 //cors configuration
 const allowedOrigins = config.cors_origins

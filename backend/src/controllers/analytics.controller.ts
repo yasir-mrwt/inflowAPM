@@ -7,7 +7,7 @@ import { searchProjectByProjectIdModel } from "../models/project.model.js";
 //controller for all services at once
 export const overViewAnalyticsController = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { project_id, range } = req.query as any;
+    const { project_id, range } = res.locals.analyticsQuery;
 
     const project = await searchProjectByProjectIdModel(project_id);
 
@@ -26,7 +26,7 @@ export const overViewAnalyticsController = catchAsync(
 
     const result = await getMasterDashboardAnalyticsService(
       project_id,
-      range || "24h",
+      range,
     );
 
     res.status(200).json({

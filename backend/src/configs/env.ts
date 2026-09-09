@@ -1,95 +1,97 @@
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
-import { access } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, "../../.env") });
 
-const currentEnv = process.env.NODE_ENV || "developement";
+dotenv.config({
+  path: path.join(__dirname, "../../.env"),
+});
 
-const allEnvs = [
+const currentEnv = process.env.NODE_ENV || "development";
+const isTest = currentEnv === "test";
+
+const requiredEnvs = [
   "PORT",
-  "DB_PORT",
-  "DB_HOST",
-  "DB_PASSWORD",
-  "DB_NAME",
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",
-  "DB_USER",
   "DATABASE_URL",
   "REDIS_URL",
-  "MAIL_HOST",
-  "MAIL_PORT",
-  "MAIL_USER",
-  "MAIL_PASSWORD",
-  "MAIL_FROM",
   "CORS_ORIGINS",
+  "MAIL_ENABLED",
 ];
 
-const refreshToken = process.env.REFRESH_TOKEN_SECRET || "";
-const accessToken = process.env.ACCESS_TOKEN_SECRET || "";
-for (const element of allEnvs) {
-  if (!process.env[element]) {
-    throw new Error(
-      `envs values are missing please refer to the env file missing value is ${element}`,
-    );
-  }
-}
-if (refreshToken.length < 24 || accessToken.length < 24) {
-  throw new Error("tokens length cant be less than 24 words");
-}
-if (refreshToken === accessToken) {
-  throw new Error("tokens cant be the same ");
+if (isTest) {
+  requiredEnvs.push("TEST_DATABASE_URL", "TEST_REDIS_URL");
 }
 
-let dbHost = process.env.DB_HOST || "postgres";
-let dbName = process.env.DB_NAME || "inflowapm_db";
-let redisurl = process.env.REDIS_URL || "redis://redis:6379";
-let cors_origins = process.env.CORS_ORIGINS || "http://localhost:3000";
-if (currentEnv === "test") {
-  dbHost = "postgres";
-  dbName = "inflowapm_db";
-  redisurl = "redis://redis:6379";
+const mailEnabled = !isTest && process.env.MAIL_ENABLED !== "false";
+
+if (mailEnabled) {
+  requiredEnvs.push(
+    "MAIL_HOST",
+    "MAIL_PORT",
+    "MAIL_USER",
+    "MAIL_PASSWORD",
+    "MAIL_FROM",
+  );
+}
+
+for (const env of requiredEnvs) {
+  if (!process.env[env]) {
+    throw new Error(`Missing environment variable: ${env}`);
+  }
+}
+
+const refreshToken = process.env.REFRESH_TOKEN_SECRET!;
+const accessToken = process.env.ACCESS_TOKEN_SECRET!;
+
+if (refreshToken.length < 24 || accessToken.length < 24) {
+  throw new Error("Token secrets must be at least 24 characters");
+}
+
+if (refreshToken === accessToken) {
+  throw new Error("Access and refresh token secrets cannot be the same");
 }
 
 interface EnvConfiguration {
-  port: number | string | undefined;
-  db_port: string | undefined;
-  db_host: string | undefined;
-  db_password: string | undefined;
-  db_name: string | undefined;
-  db_user: string | undefined;
-  db_url: string | undefined;
-  redis_url: string | undefined;
-  access_token: string | " ";
-  refresh_token: string | " ";
+  port: string | undefined;
+  db_url: string;
+  redis_url: string;
+
+  access_token: string;
+  refresh_token: string;
+
   node_env: string;
+
+  mail_enabled: boolean;
   mail_host: string | undefined;
-  mail_port: string | number | undefined;
+  mail_port: string | undefined;
   mail_user: string | undefined;
   mail_password: string | undefined;
   mail_from: string | undefined;
+
   cors_origins: string;
 }
 
 export const config: Readonly<EnvConfiguration> = {
   port: process.env.PORT,
-  db_port: process.env.DB_PORT,
-  db_host: dbHost,
-  db_password: process.env.DB_PASSWORD,
-  db_name: dbName,
-  db_user: process.env.DB_USER,
-  db_url: process.env.DB_URL,
-  redis_url: redisurl,
+  db_url: isTest ? process.env.TEST_DATABASE_URL! : process.env.DATABASE_URL!,
+
+  redis_url: isTest ? process.env.TEST_REDIS_URL! : process.env.REDIS_URL!,
+
   access_token: accessToken,
   refresh_token: refreshToken,
+
   node_env: currentEnv,
+
+  mail_enabled: mailEnabled,
   mail_host: process.env.MAIL_HOST,
   mail_port: process.env.MAIL_PORT,
   mail_user: process.env.MAIL_USER,
   mail_password: process.env.MAIL_PASSWORD,
   mail_from: process.env.MAIL_FROM,
+
   cors_origins: process.env.CORS_ORIGINS || "http://localhost:3000",
 };

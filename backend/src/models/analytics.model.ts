@@ -24,6 +24,7 @@ export async function overViewAnalyticsModel(
           coalesce(percentile_cont(0.95) within group (order by duration_ms), 0)::double precision as p95_latency
         from inflowapm.telemetry_events
         where project_id = $1
+          and type = 'http'
           and occurred_at >= now() - $2::interval;
       `,
       [project_id, intervalString],
@@ -63,6 +64,7 @@ export async function TimeLineAnalyticsModel(
           coalesce(percentile_cont(0.95) within group (order by duration_ms), 0)::double precision as p95_latency
         from inflowapm.telemetry_events
         where project_id = $1 
+          and type = 'http'
           and occurred_at >= now() - $2::interval
         group by time_bucket
         order by time_bucket asc;
@@ -103,6 +105,7 @@ export async function RoutePerformanceModel(
           coalesce(percentile_cont(0.95) within group (order by duration_ms), 0)::double precision as p95_latency
         from inflowapm.telemetry_events
         where project_id = $1 
+          and type = 'http'
           and occurred_at >= now() - $2::interval
         group by method, route
         order by request_count desc;
@@ -130,6 +133,7 @@ export interface RecentErrorRows {
 //model for recent errors
 export async function recentErrorModel(
   project_id: string,
+  intervalString: string,
 ): Promise<RecentErrorRows[]> {
   try {
     const result: QueryResult<RecentErrorRows> = await pool.query(
@@ -144,11 +148,13 @@ export async function recentErrorModel(
           metadata->>'error_message' as error_message
         from inflowapm.telemetry_events
         where project_id = $1 
+          and type = 'http'
           and status >= 500
+          and occurred_at >= now() - $2::interval
         order by occurred_at desc 
         limit 20;
       `,
-      [project_id],
+      [project_id, intervalString],
     );
     return result.rows;
   } catch (error: unknown) {

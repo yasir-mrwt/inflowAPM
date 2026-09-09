@@ -1,5 +1,6 @@
 import pool from "../configs/db.js";
-import { QueryResult, PoolClient, Pool } from "pg";
+import { QueryResult, PoolClient } from "pg";
+import { hashSecret } from "../utils/hashSecret.js";
 
 export interface ProjectRow {
   id: string;
@@ -7,6 +8,10 @@ export interface ProjectRow {
   api_key: string;
   user_id: string;
   created_at: Date;
+}
+
+export interface ProjectListRow extends ProjectRow {
+  total_count: string | number;
 }
 //creating a project
 export async function createProjectModel(
@@ -17,9 +22,10 @@ export async function createProjectModel(
 ): Promise<ProjectRow | null> {
   try {
     const runner = client || pool;
+    const apiKeyHash = hashSecret(api_key);
     const result: QueryResult<ProjectRow> = await runner.query(
       `insert into inflowapm.projects(name,api_key,user_id) values($1,$2,$3) returning id,name,api_key,user_id,created_at;`,
-      [name, api_key, user_id],
+      [name, apiKeyHash, user_id],
     );
     return result.rows[0] || null;
   } catch (error: unknown) {
@@ -34,10 +40,10 @@ export async function searchProjectByUserIdModel(
   limit: number,
   offset: number,
   client?: PoolClient,
-): Promise<ProjectRow[]> {
+): Promise<ProjectListRow[]> {
   try {
     const runner = client || pool;
-    const result: QueryResult<ProjectRow> = await runner.query(
+    const result: QueryResult<ProjectListRow> = await runner.query(
       `select id,name,api_key,user_id,created_at ,COUNT(*) OVER() AS total_count from inflowapm.projects where user_id=$1 order by created_at desc limit $2 offset $3;`,
       [user_id, limit, offset],
     );
@@ -52,7 +58,7 @@ export async function searchProjectByUserIdModel(
 export async function deleteProjectModel(
   id: string,
   user_id: string,
-): Promise<any[]> {
+): Promise<Array<{ id: string; api_key: string }>> {
   try {
     const result = await pool.query(
       `delete from inflowapm.projects where id=$1 and user_id=$2 returning id,api_key;`,
@@ -100,13 +106,33 @@ export interface ValidateProject {
 //this will be used by telemetry ingestion middleware to verify that incoming client data streams carry a valid SaaS token before letting them write to your disk.
 export async function validateProjectApiKeyModel(
   api_key: string,
-): Promise<ValidateProject> {
+): Promise<ValidateProject | null> {
   try {
-    const result: QueryResult<ValidateProject> = await pool.query(
-      `select id,user_id from inflowapm.projects where api_key=$1;`,
-      [api_key],
-    );
-    return result.rows[0] || null;
+    const apiKeyHash = hashSecret(api_key);
+    const result: QueryResult<ValidateProject & { api_key: string }> =
+      await pool.query(
+        `select id,user_id,api_key from inflowapm.projects
+         where api_key=$1 or api_key=$2;`,
+        [apiKeyHash, api_key],
+      );
+    const project = result.rows[0];
+
+    if (!project) {
+      return null;
+    }
+
+    // Transparently upgrade an API key stored before hashing was enabled.
+    if (project.api_key === api_key) {
+      await pool.query(`update inflowapm.projects set api_key=$1 where id=$2;`, [
+        apiKeyHash,
+        project.id,
+      ]);
+    }
+
+    return {
+      id: project.id,
+      user_id: project.user_id,
+    };
   } catch (error: unknown) {
     console.error("error while validating client data stream");
     throw error;

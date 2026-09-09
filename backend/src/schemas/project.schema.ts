@@ -9,18 +9,19 @@ export const projectSchema = z.object({
 });
 export type PorjectSchemaContract = z.infer<typeof projectSchema>;
 
+export const MAX_PROJECT_PAGE_SIZE = 100;
+
 export const querySchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val && !isNaN(Number(val)) ? Number(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val && !isNaN(Number(val)) ? Number(val) : 10)),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_PROJECT_PAGE_SIZE)
+    .default(10),
   all: z
-    .string()
-    .optional()
+    .enum(["true", "false"])
+    .default("false")
     .transform((val) => val === "true"),
 });
 export type QuerySchemaContract = z.infer<typeof querySchema>;

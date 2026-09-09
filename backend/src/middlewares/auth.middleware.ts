@@ -27,6 +27,6 @@ export async function authMiddleware(
     req.user = decoded;
     return next();
   } catch (error: unknown) {
-    throw next(error);
+    return next(error);
   }
 }

@@ -33,7 +33,7 @@ export async function getMasterDashboardAnalyticsService(
     overViewAnalyticsModel(project_id, intervalString),
     TimeLineAnalyticsModel(project_id, intervalString, bucketUnit),
     RoutePerformanceModel(project_id, intervalString),
-    recentErrorModel(project_id),
+    recentErrorModel(project_id, intervalString),
   ]);
 
   // 3. Extract total requests and calculate your system throughput rate
