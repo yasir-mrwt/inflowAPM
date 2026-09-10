@@ -227,3 +227,162 @@ a {
     transform: translateY(0);
   }
 }
+
+.telemetry-trace {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: telemetry-trace 8s ease-in-out infinite;
+}
+
+.live-indicator {
+  position: relative;
+}
+
+.live-indicator::after {
+  position: absolute;
+  inset: -0.1875rem;
+  border: 1px solid var(--success);
+  border-radius: 9999px;
+  opacity: 0;
+  animation: live-indicator 2.8s ease-out infinite;
+  content: "";
+}
+
+.incident-progression {
+  animation: incident-progression 5.5s ease-in-out infinite;
+}
+
+.flow-signal-y,
+.flow-signal-x {
+  animation-duration: 5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-delay: var(--flow-delay);
+}
+
+.flow-signal-y {
+  animation-name: flow-signal-y;
+}
+
+.flow-signal-x {
+  animation-name: flow-signal-x;
+}
+
+@keyframes telemetry-trace {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+
+  18%,
+  82% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.75;
+  }
+}
+
+@keyframes live-indicator {
+  from {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+
+  70%,
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+@keyframes incident-progression {
+  0%,
+  12% {
+    opacity: 0.35;
+    transform: scaleY(0);
+  }
+
+  58%,
+  88% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  100% {
+    opacity: 0.5;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes flow-signal-y {
+  0%,
+  8% {
+    top: 0;
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  27% {
+    top: 100%;
+    opacity: 1;
+  }
+
+  32%,
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes flow-signal-x {
+  0%,
+  8% {
+    left: 0;
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  27% {
+    left: 100%;
+    opacity: 1;
+  }
+
+  32%,
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-trace {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .live-indicator::after {
+    animation: none;
+  }
+
+  .incident-progression {
+    opacity: 1;
+    transform: scaleY(1);
+    animation: none;
+  }
+
+  .flow-signal-y,
+  .flow-signal-x {
+    display: none;
+    animation: none;
+  }
+}

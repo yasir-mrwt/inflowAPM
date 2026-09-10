@@ -53,13 +53,13 @@ const productGroups: NavigationGroup[] = [
       {
         label: "Requests",
         description: "Follow traffic, volume, and behavior",
-        href: "/#requests",
+        href: "/#product-overview",
         icon: ArrowLeftRight,
       },
       {
         label: "Errors",
         description: "Find failed requests and regressions",
-        href: "/#errors",
+        href: "/#incident-investigation",
         icon: CircleAlert,
       },
       {
@@ -76,19 +76,19 @@ const productGroups: NavigationGroup[] = [
       {
         label: "P95 latency",
         description: "See the slow experience averages hide",
-        href: "/#p95-latency",
+        href: "/#incident-investigation",
         icon: Gauge,
       },
       {
         label: "Throughput",
         description: "Measure request flow over time",
-        href: "/#throughput",
+        href: "/#product-overview",
         icon: Waves,
       },
       {
         label: "Telemetry events",
         description: "Connect signals to application context",
-        href: "/#telemetry",
+        href: "/#how-it-works",
         icon: RadioTower,
       },
     ],
@@ -102,13 +102,14 @@ const developerGroups: NavigationGroup[] = [
       {
         label: "Documentation",
         description: "Setup, concepts, and API reference",
-        href: "/docs",
+        href: `${githubUrl}#readme`,
         icon: BookOpen,
+        external: true,
       },
       {
         label: "Architecture",
         description: "Understand the telemetry pipeline",
-        href: "/architecture",
+        href: "/#how-it-works",
         icon: Blocks,
       },
       {
@@ -163,7 +164,7 @@ function DropdownLink({
   );
 
   const className =
-    "group flex rounded-md px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover";
+    "group flex gap-3.5 rounded-md px-3 py-3 transition-colors hover:bg-surface-hover focus-visible:bg-surface-hover";
 
   if (item.external) {
     return (
@@ -180,7 +181,12 @@ function DropdownLink({
   }
 
   return (
-    <Link href={item.href} className={className} onClick={onNavigate}>
+    <Link
+      href={item.href}
+      prefetch={false}
+      className={className}
+      onClick={onNavigate}
+    >
       {content}
     </Link>
   );
@@ -192,6 +198,9 @@ function DesktopDropdown({
   groups,
   openMenu,
   onToggle,
+  onHoverOpen,
+  onHoverCancel,
+  onHoverClose,
   onClose,
 }: {
   name: MenuName;
@@ -199,6 +208,9 @@ function DesktopDropdown({
   groups: NavigationGroup[];
   openMenu: MenuName | null;
   onToggle: (name: MenuName, trigger: HTMLButtonElement) => void;
+  onHoverOpen: (name: MenuName, trigger: HTMLButtonElement) => void;
+  onHoverCancel: () => void;
+  onHoverClose: () => void;
   onClose: () => void;
 }) {
   const isOpen = openMenu === name;
@@ -207,6 +219,8 @@ function DesktopDropdown({
   return (
     <div
       className="relative"
+      onMouseEnter={onHoverCancel}
+      onMouseLeave={onHoverClose}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           onClose();
@@ -220,6 +234,7 @@ function DesktopDropdown({
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={(event) => onToggle(name, event.currentTarget)}
+        onMouseEnter={(event) => onHoverOpen(name, event.currentTarget)}
         onKeyDown={(event) => {
           if (event.key !== "ArrowDown") return;
           event.preventDefault();
@@ -298,7 +313,7 @@ function MobileNavigation({
       role="dialog"
       aria-modal="true"
       aria-label="Navigation menu"
-      className="fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto border-t border-border-subtle bg-background px-[var(--page-gutter)] pb-8 motion-safe:animate-[menu-in_160ms_ease-out] lg:hidden"
+      className="fixed inset-x-0 top-16 bottom-0 z-40 w-full overflow-y-auto overscroll-contain border-t border-border-subtle bg-background px-[var(--page-gutter)] pb-8 motion-safe:animate-[menu-in_160ms_ease-out] min-[1080px]:hidden"
     >
       <nav
         className="mx-auto flex w-full max-w-[var(--content-width)] flex-col py-5"
@@ -313,7 +328,7 @@ function MobileNavigation({
             How it works
           </Link>
           <Link
-            href="/architecture"
+            href="/#how-it-works"
             className="type-nav rounded-md border border-border-subtle bg-surface px-3 py-3 text-center text-text-secondary transition-colors hover:border-border hover:text-text-primary"
             onClick={onNavigate}
           >
@@ -350,12 +365,12 @@ function MobileNavigation({
 
         <div className="mt-7 grid gap-3 border-t border-border-subtle pt-6 sm:grid-cols-2">
           <Button variant="outline" asChild>
-            <Link href="/login" onClick={onNavigate}>
+            <Link href="/login" prefetch={false} onClick={onNavigate}>
               Log in
             </Link>
           </Button>
           <Button asChild>
-            <Link href="/register" onClick={onNavigate}>
+            <Link href="/register" prefetch={false} onClick={onNavigate}>
               Start monitoring
             </Link>
           </Button>
@@ -373,12 +388,23 @@ export function MarketingNavbar() {
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const mobilePanelRef = useRef<HTMLDivElement>(null);
   const lastDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const hoverCloseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 12);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1080px)");
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setMobileOpen(false);
+    };
+
+    desktopQuery.addEventListener("change", handleBreakpointChange);
+    return () => desktopQuery.removeEventListener("change", handleBreakpointChange);
   }, []);
 
   useEffect(() => {
@@ -448,7 +474,40 @@ export function MarketingNavbar() {
     };
   }, [mobileOpen]);
 
+  useEffect(
+    () => () => {
+      if (hoverCloseTimerRef.current !== null) {
+        window.clearTimeout(hoverCloseTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  function cancelDropdownClose() {
+    if (hoverCloseTimerRef.current === null) return;
+    window.clearTimeout(hoverCloseTimerRef.current);
+    hoverCloseTimerRef.current = null;
+  }
+
+  function openDropdown(name: MenuName, trigger: HTMLButtonElement) {
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      return;
+    }
+    cancelDropdownClose();
+    lastDropdownTriggerRef.current = trigger;
+    setOpenMenu(name);
+  }
+
+  function scheduleDropdownClose() {
+    cancelDropdownClose();
+    hoverCloseTimerRef.current = window.setTimeout(() => {
+      setOpenMenu(null);
+      hoverCloseTimerRef.current = null;
+    }, 140);
+  }
+
   function toggleDropdown(name: MenuName, trigger: HTMLButtonElement) {
+    cancelDropdownClose();
     lastDropdownTriggerRef.current = trigger;
     setOpenMenu((current) => (current === name ? null : name));
   }
@@ -459,97 +518,113 @@ export function MarketingNavbar() {
   }
 
   function closeNavigation() {
+    cancelDropdownClose();
     setOpenMenu(null);
     setMobileOpen(false);
   }
 
   return (
-    <header
-      ref={headerRef}
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 h-16 border-b border-transparent transition-[background-color,border-color,box-shadow] duration-200",
-        scrolled || mobileOpen
-          ? "border-border-subtle bg-background/90 shadow-[0_10px_35px_rgba(0,0,0,0.24)] backdrop-blur-xl"
-          : "bg-transparent",
-      )}
-    >
-      <div className="mx-auto flex h-full w-full max-w-[var(--content-width)] items-center gap-7 px-[var(--page-gutter)]">
-        <Link
-          href="/"
-          aria-label="InflowAPM home"
-          className="rounded-md"
-          onClick={closeNavigation}
-        >
-          <BrandLockup className="size-9" priority />
-        </Link>
-
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
-          <DesktopDropdown
-            name="product"
-            label="Product"
-            groups={productGroups}
-            openMenu={openMenu}
-            onToggle={toggleDropdown}
-            onClose={closeNavigation}
-          />
+    <>
+      <header
+        ref={headerRef}
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 h-16 border-b border-transparent transition-[background-color,border-color,box-shadow] duration-200",
+          scrolled || mobileOpen
+            ? "border-border-subtle bg-background/90 shadow-[0_10px_35px_rgba(0,0,0,0.24)] backdrop-blur-xl"
+            : "bg-transparent",
+        )}
+      >
+        <div className="mx-auto grid h-full w-full max-w-[var(--content-width)] grid-cols-[1fr_auto] items-center gap-4 px-[var(--page-gutter)] min-[1080px]:grid-cols-[1fr_auto_1fr] min-[1080px]:gap-5">
           <Link
-            href="/#how-it-works"
-            className="type-nav rounded-md px-2.5 py-2 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
+            href="/"
+            aria-label="InflowAPM home"
+            className="inline-flex h-10 items-center justify-self-start rounded-md leading-none"
             onClick={closeNavigation}
           >
-            How it works
+            <BrandLockup className="size-9" priority />
           </Link>
-          <Link
-            href="/architecture"
-            className="type-nav rounded-md px-2.5 py-2 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
-            onClick={closeNavigation}
-          >
-            Architecture
-          </Link>
-          <DesktopDropdown
-            name="developers"
-            label="Developers"
-            groups={developerGroups}
-            openMenu={openMenu}
-            onToggle={toggleDropdown}
-            onClose={closeNavigation}
-          />
-        </nav>
 
-        <div className="ml-auto hidden items-center gap-1.5 lg:flex">
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="type-nav inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
+          <nav
+            className="hidden items-center gap-1 justify-self-center min-[1080px]:flex"
+            aria-label="Primary navigation"
           >
-            <GitHubMark className="size-[15px]" />
-            GitHub
-          </a>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/register">Start monitoring</Link>
-          </Button>
+            <DesktopDropdown
+              name="product"
+              label="Product"
+              groups={productGroups}
+              openMenu={openMenu}
+              onToggle={toggleDropdown}
+              onHoverOpen={openDropdown}
+              onHoverCancel={cancelDropdownClose}
+              onHoverClose={scheduleDropdownClose}
+              onClose={closeNavigation}
+            />
+            <Link
+              href="/#how-it-works"
+              className="type-nav rounded-md px-2.5 py-2 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
+              onClick={closeNavigation}
+            >
+              How it works
+            </Link>
+            <Link
+              href="/#how-it-works"
+              className="type-nav rounded-md px-2.5 py-2 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
+              onClick={closeNavigation}
+            >
+              Architecture
+            </Link>
+            <DesktopDropdown
+              name="developers"
+              label="Developers"
+              groups={developerGroups}
+              openMenu={openMenu}
+              onToggle={toggleDropdown}
+              onHoverOpen={openDropdown}
+              onHoverCancel={cancelDropdownClose}
+              onHoverClose={scheduleDropdownClose}
+              onClose={closeNavigation}
+            />
+          </nav>
+
+          <div className="hidden items-center gap-1.5 justify-self-end min-[1080px]:flex">
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="type-nav inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-text-secondary transition-colors hover:bg-surface/75 hover:text-text-primary"
+            >
+              <GitHubMark className="size-[15px]" />
+              GitHub
+            </a>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/login" prefetch={false}>
+                Log in
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/register" prefetch={false}>
+                Start monitoring
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            ref={mobileTriggerRef}
+            type="button"
+            className="inline-flex size-10 items-center justify-center justify-self-end rounded-md border border-border-subtle bg-surface/70 text-text-secondary transition-colors hover:border-border hover:text-text-primary min-[1080px]:hidden"
+            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
+            onClick={toggleMobile}
+          >
+            {mobileOpen ? (
+              <X size={19} aria-hidden="true" />
+            ) : (
+              <Menu size={19} aria-hidden="true" />
+            )}
+          </button>
         </div>
-
-        <button
-          ref={mobileTriggerRef}
-          type="button"
-          className="ml-auto inline-flex size-10 items-center justify-center rounded-md border border-border-subtle bg-surface/70 text-text-secondary transition-colors hover:border-border hover:text-text-primary lg:hidden"
-          aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={mobileOpen}
-          aria-controls="mobile-navigation"
-          onClick={toggleMobile}
-        >
-          {mobileOpen ? (
-            <X size={19} aria-hidden="true" />
-          ) : (
-            <Menu size={19} aria-hidden="true" />
-          )}
-        </button>
-      </div>
+      </header>
 
       {mobileOpen ? (
         <MobileNavigation
@@ -557,6 +632,6 @@ export function MarketingNavbar() {
           panelRef={mobilePanelRef}
         />
       ) : null}
-    </header>
+    </>
   );
 }

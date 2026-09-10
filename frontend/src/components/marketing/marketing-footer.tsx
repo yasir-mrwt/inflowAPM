@@ -6,19 +6,25 @@ import { GitHubMark } from "@/components/icons/github-mark";
 
 const githubUrl = "https://github.com/yasir-mrwt/inflowAPM";
 
-const footerGroups = [
+type FooterLink = {
+  label: string;
+  href: string;
+  external?: boolean;
+};
+
+const footerGroups: { label: string; links: FooterLink[] }[] = [
   {
     label: "Product",
     links: [
       { label: "Overview", href: "/#product-overview" },
       { label: "How it works", href: "/#how-it-works" },
-      { label: "Architecture", href: "/architecture" },
+      { label: "Architecture", href: "/#how-it-works" },
     ],
   },
   {
     label: "Developers",
     links: [
-      { label: "Documentation", href: "/docs" },
+      { label: "Documentation", href: `${githubUrl}#readme`, external: true },
       { label: "Roadmap", href: `${githubUrl}#roadmap`, external: true },
       { label: "Source code", href: githubUrl, external: true },
     ],
@@ -68,6 +74,7 @@ export function MarketingFooter() {
                     ) : (
                       <Link
                         href={link.href}
+                        prefetch={false}
                         className="text-sm text-text-secondary transition-colors hover:text-text-primary"
                       >
                         {link.label}
