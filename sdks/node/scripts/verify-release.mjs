@@ -10,20 +10,50 @@ const packageJson = JSON.parse(
 );
 const expectedRepository = "yasir-mrwt/inflowAPM";
 const expectedTag = `node-v${packageJson.version}`;
-const isBootstrapRelease = process.env.INFLOWAPM_BOOTSTRAP_RELEASE === "true";
+const initialPackageName = "@inflowapm/node";
+const initialPackageVersion = "0.1.0";
+const initialReleaseTag = "node-v0.1.0";
+const npmRegistry = "https://registry.npmjs.org/";
+const isInitialPublish = process.env.INFLOWAPM_INITIAL_PUBLISH === "true";
 
-if (isBootstrapRelease) {
-  const exactTag = execFileSync("git", ["describe", "--tags", "--exact-match"], {
+function git(...args) {
+  return execFileSync("git", args, {
     cwd: sdkRoot,
     encoding: "utf8",
   }).trim();
-  const status = execFileSync("git", ["status", "--porcelain"], {
-    cwd: sdkRoot,
-    encoding: "utf8",
-  }).trim();
+}
 
-  assert.equal(exactTag, expectedTag, `checked-out tag must be exactly ${expectedTag}`);
-  assert.equal(status, "", "bootstrap publishing requires a clean worktree");
+if (isInitialPublish) {
+  const intendedCommit = process.env.INFLOWAPM_INITIAL_PUBLISH_COMMIT;
+  const headCommit = git("rev-parse", "HEAD^{commit}");
+  const tagType = git("cat-file", "-t", initialReleaseTag);
+  const tagCommit = git("rev-parse", `${initialReleaseTag}^{commit}`);
+  const exactTag = git("describe", "--tags", "--exact-match");
+  const status = git("status", "--porcelain", "--untracked-files=all");
+
+  assert.notEqual(
+    process.env.GITHUB_ACTIONS,
+    "true",
+    "the initial publish path is manual-only; GitHub Actions must use trusted publishing",
+  );
+  assert.equal(packageJson.name, initialPackageName, "initial publish package name is locked");
+  assert.equal(packageJson.version, initialPackageVersion, "initial publish version is locked");
+  assert.equal(expectedTag, initialReleaseTag, "initial publish release tag is locked");
+  assert.equal(
+    process.env.npm_config_access,
+    "public",
+    "initial publish must be invoked with --access public",
+  );
+  assert.match(
+    intendedCommit ?? "",
+    /^[0-9a-f]{40}$/,
+    "set INFLOWAPM_INITIAL_PUBLISH_COMMIT to the reviewed full release commit SHA",
+  );
+  assert.equal(tagType, "tag", `${initialReleaseTag} must be an annotated tag`);
+  assert.equal(exactTag, initialReleaseTag, `checked-out tag must be exactly ${initialReleaseTag}`);
+  assert.equal(headCommit, intendedCommit, "HEAD must equal the explicitly approved release commit");
+  assert.equal(tagCommit, intendedCommit, `${initialReleaseTag} must resolve to the approved commit`);
+  assert.equal(status, "", "initial publishing requires a completely clean worktree");
 } else {
   assert.equal(
     process.env.GITHUB_ACTIONS,
@@ -46,7 +76,23 @@ if (isBootstrapRelease) {
     `release tag must be exactly ${expectedTag}`,
   );
 }
+assert.equal(packageJson.name, initialPackageName, "release package name must remain @inflowapm/node");
 assert.equal(packageJson.private, false, "remove private:true only when publication is approved");
+assert.equal(
+  packageJson.publishConfig?.access,
+  "public",
+  "release package must explicitly publish with public access",
+);
+assert.equal(
+  packageJson.publishConfig?.registry,
+  npmRegistry,
+  `release package must use ${npmRegistry}`,
+);
+assert.equal(
+  packageJson.publishConfig?.provenance,
+  true,
+  "trusted-workflow releases must retain npm provenance",
+);
 assert.equal(
   packageJson.license,
   "MIT",
@@ -65,5 +111,5 @@ assert.match(
 );
 
 console.log(
-  `Release guard passed for ${packageJson.name}@${packageJson.version} (${isBootstrapRelease ? "bootstrap" : "trusted workflow"}).`,
+  `Release guard passed for ${packageJson.name}@${packageJson.version} (${isInitialPublish ? "one-time initial publish" : "trusted workflow"}).`,
 );

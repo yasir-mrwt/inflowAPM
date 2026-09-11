@@ -39,11 +39,11 @@ jobs:
       - name: Install exact dependencies
         run: npm ci
 
-      - name: Verify release identity
-        run: npm run release:guard
-
       - name: Verify source, tests, handles, and packed consumers
         run: npm run release:check
+
+      - name: Verify release identity
+        run: npm run release:guard
 
       - name: Publish public package with provenance
         run: npm publish --access public

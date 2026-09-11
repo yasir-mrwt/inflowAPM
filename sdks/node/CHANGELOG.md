@@ -12,7 +12,7 @@ All notable changes to `@inflowapm/node` will be documented in this file. The pr
 - Express 4.18+ and Express 5 instrumentation with normalized routes and privacy-safe defaults.
 - ESM, CommonJS, and TypeScript declaration outputs from one public entry point.
 - Real backend integration coverage, packed-consumer checks, open-handle checks, and request-path benchmarks.
-- Node 24 and Node 26 release verification plus a guarded npm trusted-publishing workflow.
+- Node 24 and Node 26 release verification, a guarded npm trusted-publishing workflow, and an exact-commit one-time initial publish path for `0.1.0`.
 - MIT package licensing and confirmed `@inflowapm/node` release metadata.
 - Implementation-matched quickstart, configuration, reliability, privacy, localhost, self-hosting, and troubleshooting documentation.
 

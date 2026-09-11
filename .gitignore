@@ -44,3 +44,6 @@ dist/
 *.njsproj
 *.sln
 *.sw?
+
+# Local Codex task prompts
+docs/codex/

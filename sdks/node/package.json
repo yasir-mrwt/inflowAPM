@@ -71,7 +71,7 @@
     "release:guard": "node scripts/verify-release.mjs",
     "release:check": "npm run lint && npm run typecheck && npm test && npm run test:open-handles && npm run test:package",
     "prepack": "npm run build",
-    "prepublishOnly": "npm run release:guard && npm run release:check"
+    "prepublishOnly": "npm run release:check && npm run release:guard"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
