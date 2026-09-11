@@ -1,0 +1,59 @@
+{
+  "name": "@inflowapm/node",
+  "version": "0.1.0",
+  "description": "Fail-open telemetry client for server-side Node.js applications using InflowAPM.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "express": "^4.18.0 || ^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
+  "overrides": {
+    "qs": "6.16.0"
+  },
+  "scripts": {
+    "clean": "node ./scripts/clean.mjs",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node ./scripts/finalize-build.mjs",
+    "test": "npm run build && node --test --test-concurrency=1 tests/*.test.mjs && npm run test:types && npm run test:imports",
+    "test:imports": "node tests/import-esm.mjs && node tests/import-cjs.cjs",
+    "test:e2e": "node tests/e2e-real-backend.mjs",
+    "test:types": "tsc -p tsconfig.test.json --noEmit",
+    "test:open-handles": "node --test tests/open-handles.test.mjs",
+    "benchmark": "node benchmarks/run-request-path.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^7.0.0",
+    "eslint": "^10.10.0",
+    "express": "^5.2.1",
+    "express4": "npm:express@4.22.2",
+    "supertest": "^7.2.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.0.0"
+  }
+}

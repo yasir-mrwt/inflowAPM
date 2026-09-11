@@ -1,6 +1,6 @@
 # InflowAPM
 
-InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. Its Next.js frontend includes a complete responsive marketing homepage that explains the production problem, telemetry pipeline, incident-investigation workflow, supported HTTP integration, technology stack, and open-source project; authentication screens and the connected analytics dashboard remain planned.
+InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. The repository now also contains SDK-0 through SDK-4 of `@inflowapm/node`: a typed, bounded, fail-open client whose Express instrumentation has been validated from a real localhost application through BullMQ, PostgreSQL, and analytics. Its Next.js frontend includes a complete responsive marketing homepage; authentication screens and the connected analytics dashboard remain planned.
 
 ## Current status
 
@@ -12,6 +12,8 @@ InflowAPM is an open-source application performance monitoring project. Its back
 | Batched telemetry ingestion | Implemented |
 | BullMQ telemetry processing and PostgreSQL bulk insert | Implemented |
 | Dashboard analytics | Implemented |
+| Node SDK contract, client, reliability, Express instrumentation, and real integration hardening (SDK-0 through SDK-4) | Implemented |
+| Node SDK release readiness and expanded developer integration (SDK-5 through SDK-6) | Planned |
 | Complete public marketing homepage | Implemented |
 | Authentication experience and connected analytics dashboard | Planned |
 | CI/CD and production deployment | Planned |
@@ -21,7 +23,7 @@ The backend integration tests exercise authentication, projects, ingestion, anal
 ## Architecture
 
 ```text
-Browser / telemetry producer
+Server application / telemetry producer
             |
             v
        Express API
@@ -107,6 +109,14 @@ InflowAPM/
 │       │   ├── marketing/
 │       │   └── ui/
 │       └── lib/
+├── sdks/
+│   └── node/
+│       ├── src/
+│       ├── tests/
+│       ├── package.json
+│       ├── ARCHITECTURE.md
+│       ├── ENGINEERING_NOTES.md
+│       └── README.md
 ├── docker-compose.yml
 └── README.md
 ```
@@ -154,6 +164,16 @@ npm run dev
 ```
 
 The frontend normally runs at `http://localhost:3000`. Add every permitted frontend origin to the comma-separated `CORS_ORIGINS` setting.
+
+To build and test the current Node SDK:
+
+```bash
+cd sdks/node
+npm install
+npm test
+```
+
+The package is not published. Its focused usage and scope are documented in `sdks/node/README.md`.
 
 ## Docker setup
 
@@ -315,6 +335,10 @@ Authorization: Bearer <token-or-project-api-key>
 - PostgreSQL indexes for project/time and project/route/time queries
 
 ## Roadmap
+
+### Node SDK status
+
+SDK-0 through SDK-4 are complete. The package validates configuration and manual events, adds language-neutral service/runtime identity, buffers within a fixed memory bound, automatically sends bounded batches with controlled retry, exposes fail-open lifecycle results, and instruments Express request completion with normalized routes. Its real example is verified through localhost ingestion, BullMQ processing, PostgreSQL persistence, and dashboard analytics. npm release readiness (SDK-5) and developer-site integration (SDK-6) remain deliberately staged.
 
 ### Frontend status
 
