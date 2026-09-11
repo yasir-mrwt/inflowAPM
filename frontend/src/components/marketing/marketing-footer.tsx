@@ -24,7 +24,8 @@ const footerGroups: { label: string; links: FooterLink[] }[] = [
   {
     label: "Developers",
     links: [
-      { label: "Documentation", href: `${githubUrl}#readme`, external: true },
+      { label: "Documentation", href: "/docs" },
+      { label: "Node.js SDK", href: "/#node-sdk" },
       { label: "Roadmap", href: `${githubUrl}#roadmap`, external: true },
       { label: "Source code", href: githubUrl, external: true },
     ],

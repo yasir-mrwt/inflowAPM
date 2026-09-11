@@ -9,8 +9,8 @@ import {
   ChevronDown,
   CircleAlert,
   Gauge,
-  Map,
   Menu,
+  Package,
   RadioTower,
   Route,
   Waves,
@@ -101,10 +101,15 @@ const developerGroups: NavigationGroup[] = [
     items: [
       {
         label: "Documentation",
-        description: "Setup, concepts, and API reference",
-        href: `${githubUrl}#readme`,
+        description: "Node.js setup, reliability, and privacy",
+        href: "/docs",
         icon: BookOpen,
-        external: true,
+      },
+      {
+        label: "Node.js SDK",
+        description: "Instrument Express with bounded telemetry",
+        href: "/#node-sdk",
+        icon: Package,
       },
       {
         label: "Architecture",
@@ -117,13 +122,6 @@ const developerGroups: NavigationGroup[] = [
         description: "Read the source and contribute",
         href: githubUrl,
         icon: GitHubMark,
-        external: true,
-      },
-      {
-        label: "Roadmap",
-        description: "See what is implemented and planned",
-        href: `${githubUrl}#roadmap`,
-        icon: Map,
         external: true,
       },
     ],
@@ -265,17 +263,10 @@ function DesktopDropdown({
           aria-labelledby={`${panelId}-trigger`}
           className={cn(
             "absolute top-[calc(100%+0.75rem)] left-0 z-50 border border-border bg-surface-elevated p-2 shadow-[0_22px_70px_rgba(0,0,0,0.42)] motion-safe:animate-[menu-in_160ms_ease-out]",
-            groups.length > 1
-              ? "w-[38rem] rounded-lg"
-              : "w-[20rem] rounded-lg",
+            groups.length > 1 ? "w-[38rem] rounded-lg" : "w-[20rem] rounded-lg",
           )}
         >
-          <div
-            className={cn(
-              "grid gap-2",
-              groups.length > 1 && "grid-cols-2",
-            )}
-          >
+          <div className={cn("grid gap-2", groups.length > 1 && "grid-cols-2")}>
             {groups.map((group) => (
               <div key={group.label} className="p-2">
                 <p className="type-meta mb-2 px-2 text-text-muted">
@@ -404,7 +395,8 @@ export function MarketingNavbar() {
     };
 
     desktopQuery.addEventListener("change", handleBreakpointChange);
-    return () => desktopQuery.removeEventListener("change", handleBreakpointChange);
+    return () =>
+      desktopQuery.removeEventListener("change", handleBreakpointChange);
   }, []);
 
   useEffect(() => {

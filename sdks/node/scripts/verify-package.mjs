@@ -22,6 +22,10 @@ function run(command, args, options = {}) {
     env: {
       ...process.env,
       npm_config_cache: join(temporaryRoot, "npm-cache"),
+      // A parent `npm publish --dry-run` exports this setting to lifecycle
+      // scripts. The verifier needs its nested pack to create the temporary
+      // tarball that it inspects and deletes locally.
+      npm_config_dry_run: "false",
     },
     stdio: ["ignore", "pipe", "pipe"],
     ...options,

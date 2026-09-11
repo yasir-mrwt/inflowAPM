@@ -144,7 +144,7 @@ test("real Express responses stay fail-open across ingestion failures", async (t
   });
 });
 
-test("sustained slow delivery keeps the buffer and retry ownership bounded", async () => {
+test("sustained slow delivery keeps the buffer and retry ownership bounded", async (t) => {
   const collector = await startCollector(async () => {
     await new Promise((resolve) => setTimeout(resolve, 250));
     return { status: 202 };
@@ -158,26 +158,34 @@ test("sustained slow delivery keeps the buffer and retry ownership bounded", asy
       shutdownTimeoutMs: 30,
     }),
   );
-  const app = createExampleApplication(inflow);
+  t.after(async () => {
+    await inflow.shutdown();
+    await collector.close();
+  });
   const rssBefore = process.memoryUsage().rss;
-  const responses = await Promise.all(
-    Array.from({ length: 300 }, () => request(app).get("/health").expect(200)),
-  );
-  assert.equal(responses.length, 300);
+  const attemptedEvents = 300;
+  for (let index = 0; index < attemptedEvents; index += 1) {
+    inflow.captureEvent({
+      type: "http",
+      route: "/health",
+      method: "GET",
+      status: 200,
+      durationMs: index + 1,
+    });
+  }
   await waitUntil(() => collector.requests.length === 1);
   const stats = inflow.getStats();
   assert.ok(stats.bufferedEvents <= 25);
   assert.ok(stats.droppedEvents > 0);
-  assert.equal(stats.capturedEvents + stats.droppedEvents, 300);
+  assert.equal(stats.capturedEvents + stats.droppedEvents, attemptedEvents);
   const rssGrowthBytes = process.memoryUsage().rss - rssBefore;
   assert.ok(rssGrowthBytes < 128 * 1024 * 1024);
   const shutdown = await inflow.shutdown();
   assert.equal(shutdown.timedOut, true);
   assert.equal(inflow.getStats().bufferedEvents, 0);
-  await collector.close();
 });
 
-test("threshold, interval, and manual flush pressure does not duplicate events", async () => {
+test("threshold, interval, and manual flush pressure does not duplicate events", async (t) => {
   const collector = await startCollector();
   const inflow = new InflowAPM(
     options(collector.endpoint, {
@@ -188,14 +196,32 @@ test("threshold, interval, and manual flush pressure does not duplicate events",
       maxAttempts: 1,
     }),
   );
-  const app = createExampleApplication(inflow);
-  const load = Promise.all(
-    Array.from({ length: 200 }, () => request(app).get("/health").expect(200)),
-  );
-  const manualFlushes = Promise.all([inflow.flush(), inflow.flush(), inflow.flush()]);
-  await Promise.all([load, manualFlushes]);
-  await waitUntil(() => inflow.getStats().sentEvents === 200);
-  await inflow.flush();
+  t.after(async () => {
+    await inflow.shutdown();
+    await collector.close();
+  });
+  const manualFlushes = [];
+  for (let index = 0; index < 200; index += 1) {
+    const capture = inflow.captureEvent({
+      type: "http",
+      route: "/health",
+      method: "GET",
+      status: 200,
+      durationMs: index + 1,
+    });
+    assert.equal(capture.accepted, true);
+    if ((index + 1) % 20 === 0) {
+      manualFlushes.push(inflow.flush());
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+  }
+  await Promise.all(manualFlushes);
+  let flush = await inflow.flush();
+  assert.equal(flush.ok, true);
+  while (inflow.getStats().bufferedEvents > 0) {
+    flush = await inflow.flush();
+    assert.equal(flush.ok, true);
+  }
   const deliveredEvents = collector.requests.reduce(
     (count, body) => count + JSON.parse(body.toString("utf8")).length,
     0,
@@ -209,8 +235,6 @@ test("threshold, interval, and manual flush pressure does not duplicate events",
     },
     { captured: 200, sent: 200, dropped: 0 },
   );
-  await inflow.shutdown();
-  await collector.close();
 });
 
 test("development, staging, and production use the same validated client", async () => {

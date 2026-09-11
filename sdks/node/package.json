@@ -2,7 +2,7 @@
   "name": "@inflowapm/node",
   "version": "0.1.0",
   "description": "Fail-open telemetry client for server-side Node.js applications using InflowAPM.",
-  "private": true,
+  "private": false,
   "license": "MIT",
   "keywords": [
     "apm",
