@@ -3,8 +3,26 @@
   "version": "0.1.0",
   "description": "Fail-open telemetry client for server-side Node.js applications using InflowAPM.",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "keywords": [
+    "apm",
+    "express",
+    "monitoring",
+    "nodejs",
+    "observability",
+    "telemetry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yasir-mrwt/inflowAPM.git",
+    "directory": "sdks/node"
+  },
+  "homepage": "https://github.com/yasir-mrwt/inflowAPM/tree/main/sdks/node#readme",
+  "bugs": {
+    "url": "https://github.com/yasir-mrwt/inflowAPM/issues"
+  },
   "type": "module",
+  "sideEffects": false,
   "engines": {
     "node": ">=24"
   },
@@ -15,12 +33,18 @@
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "express": "^4.18.0 || ^5.0.0"
   },
@@ -42,8 +66,12 @@
     "test:e2e": "node tests/e2e-real-backend.mjs",
     "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:open-handles": "node --test tests/open-handles.test.mjs",
+    "test:package": "node scripts/verify-package.mjs",
     "benchmark": "node benchmarks/run-request-path.mjs",
-    "prepack": "npm run build"
+    "release:guard": "node scripts/verify-release.mjs",
+    "release:check": "npm run lint && npm run typecheck && npm test && npm run test:open-handles && npm run test:package",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run release:guard && npm run release:check"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

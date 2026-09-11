@@ -1,6 +1,6 @@
 # InflowAPM
 
-InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. The repository now also contains SDK-0 through SDK-4 of `@inflowapm/node`: a typed, bounded, fail-open client whose Express instrumentation has been validated from a real localhost application through BullMQ, PostgreSQL, and analytics. Its Next.js frontend includes a complete responsive marketing homepage; authentication screens and the connected analytics dashboard remain planned.
+InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. The repository now also contains SDK-0 through SDK-5 of `@inflowapm/node`: a typed, bounded, fail-open client whose Express instrumentation has been validated from a real localhost application through BullMQ, PostgreSQL, and analytics and whose npm release path is guarded by package, CI, and provenance checks. Its Next.js frontend includes a complete responsive marketing homepage; authentication screens and the connected analytics dashboard remain planned.
 
 ## Current status
 
@@ -12,8 +12,8 @@ InflowAPM is an open-source application performance monitoring project. Its back
 | Batched telemetry ingestion | Implemented |
 | BullMQ telemetry processing and PostgreSQL bulk insert | Implemented |
 | Dashboard analytics | Implemented |
-| Node SDK contract, client, reliability, Express instrumentation, and real integration hardening (SDK-0 through SDK-4) | Implemented |
-| Node SDK release readiness and expanded developer integration (SDK-5 through SDK-6) | Planned |
+| Node SDK contract, client, reliability, Express instrumentation, real integration hardening, and guarded release readiness (SDK-0 through SDK-5) | Implemented |
+| Node SDK npm publication activation and expanded developer integration (SDK-6) | Awaiting explicit publication authorization; SDK-6 not started |
 | Complete public marketing homepage | Implemented |
 | Authentication experience and connected analytics dashboard | Planned |
 | CI/CD and production deployment | Planned |
@@ -338,7 +338,7 @@ Authorization: Bearer <token-or-project-api-key>
 
 ### Node SDK status
 
-SDK-0 through SDK-4 are complete. The package validates configuration and manual events, adds language-neutral service/runtime identity, buffers within a fixed memory bound, automatically sends bounded batches with controlled retry, exposes fail-open lifecycle results, and instruments Express request completion with normalized routes. Its real example is verified through localhost ingestion, BullMQ processing, PostgreSQL persistence, and dashboard analytics. npm release readiness (SDK-5) and developer-site integration (SDK-6) remain deliberately staged.
+SDK-0 through SDK-5 are complete at repository level. The package validates configuration and manual events, adds language-neutral service/runtime identity, buffers within a fixed memory bound, automatically sends bounded batches with controlled retry, exposes fail-open lifecycle results, and instruments Express request completion with normalized routes. Its real example is verified through localhost ingestion, BullMQ processing, PostgreSQL persistence, and dashboard analytics. SDK-5 adds MIT licensing, confirmed `@inflowapm/node` metadata, exact artifact checks, Node 24/26 CI, release identity guards, changelog/security procedures, and a tokenless trusted-publishing workflow. Actual npm publication remains disabled pending explicit authorization; SDK-6 has not started.
 
 ### Frontend status
 

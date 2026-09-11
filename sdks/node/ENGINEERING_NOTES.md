@@ -134,4 +134,4 @@ At `0.1.0`, the API is still pre-1.0, but changes should still be deliberate:
 - minor: backward-compatible capability;
 - major: incompatible public API or protocol change.
 
-The package is private and unlicensed during these engineering stages. No npm publish command belongs in normal build/test scripts. SDK-5 requires explicit approval, an actual open-source license decision, package provenance, CI release controls, and npm authentication.
+SDK-5 now supplies MIT package metadata and license text, exact tarball verification, Node 24/26 CI, release identity checks, and a tokenless GitHub Actions publishing path with provenance. The owner confirmed control of the `@inflowapm` npm organization. The package intentionally retains `private: true`, and no publish has been performed or authorized.

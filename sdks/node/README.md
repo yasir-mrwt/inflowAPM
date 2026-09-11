@@ -1,14 +1,20 @@
 # @inflowapm/node
 
-The fail-open server-side Node.js telemetry SDK for InflowAPM. SDK-0 through SDK-4 are implemented: the package provides a bounded core client, automatic delivery with bounded retry, graceful shutdown, Express HTTP instrumentation, and a real localhost example validated through PostgreSQL and analytics.
+The fail-open server-side Node.js telemetry SDK for InflowAPM. SDK-0 through SDK-5 are implemented: the package provides a bounded core client, automatic delivery with bounded retry, graceful shutdown, Express HTTP instrumentation, a real localhost example validated through PostgreSQL and analytics, and a guarded npm release pipeline.
 
-The package is private and is not published to npm. During development, install it from a local checkout:
+The package is MIT licensed under [LICENSE](./LICENSE), and the project owner has confirmed control of the `@inflowapm` npm organization scope. It is not published to npm yet and intentionally retains `private: true` as the final hard lock until publication is explicitly authorized. During development, install it from a local checkout:
 
 ```bash
 npm install /absolute/path/to/InflowAPM/sdks/node
 ```
 
 Node.js 24 or newer is required. Node 24 LTS is the minimum production baseline and Node 26 is the current compatibility target. The package exposes ESM, CommonJS, and TypeScript declarations.
+
+## Release readiness
+
+`npm run release:check` runs linting, type checking, the complete isolated test suite, the open-handle regression test, and a clean tarball installation through both ESM and CommonJS. The package whitelist includes only compiled output plus npm's required metadata and documentation files.
+
+CI repeats that release check and a dependency audit on Node 24 and Node 26. Publishing is restricted to the `Node SDK Release` workflow, an exact `node-vX.Y.Z` GitHub Release tag, and the protected `npm-production` environment. The workflow is prepared for npm trusted publishing with OIDC and provenance; it contains no npm write token. Actual publication remains disabled. See [RELEASING.md](./RELEASING.md) for the owner-only activation and release procedure and [SECURITY.md](./SECURITY.md) for private vulnerability reporting.
 
 ## Express setup
 
