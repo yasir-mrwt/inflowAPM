@@ -24,4 +24,4 @@ curl http://127.0.0.1:3001/slow
 curl http://127.0.0.1:3001/error
 ```
 
-This remains a repository example until package release work is explicitly approved in SDK-5.
+This remains a repository example until the controlled first npm publication is explicitly approved.

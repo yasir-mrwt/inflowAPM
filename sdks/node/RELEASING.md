@@ -1,20 +1,20 @@
 # Node SDK Release Procedure
 
-This document covers SDK-5 release readiness. It does not authorize an npm publish. Publishing changes external state and must be explicitly approved by the project owner.
+This document covers release readiness after SDK-6. It does not authorize an npm publish. Publishing changes external state and must be explicitly approved by the project owner.
 
 ## Current release status
 
 The SDK uses the approved package name `@inflowapm/node`. The owner has confirmed control of the `@inflowapm` npm organization, and the package carries the approved MIT license in both its metadata and included license text.
 
-Actual publication is still disabled. `package.json` intentionally retains `private: true`, and the release guard rejects publishing until a later, explicit owner authorization removes that final hard lock. No release tag or npm publish is part of SDK-5 finalization.
+Actual publication has not happened. SDK-7 activates the manifest with `private: false`, but the release guard still rejects publishing unless it runs from the exact clean release tag in the approved bootstrap or GitHub release path. No release tag or npm publish has been created during preparation.
 
-The first release must also replace the `Unreleased` changelog entry with a versioned release section. The release guard verifies the exact tag, clean worktree, `private: false`, MIT metadata and license text, and matching changelog version before any publish lifecycle can continue.
+The changelog now contains the versioned `0.1.0` release section. The release guard verifies the exact tag, clean worktree, `private: false`, MIT metadata and license text, and matching changelog version before any publish lifecycle can continue.
 
 ## One-time npm setup
 
 1. Require account-level two-factor authentication for maintainers of the confirmed `@inflowapm` organization.
-2. After explicit publication approval, remove `private: true` in one reviewed change. Keep the package name `@inflowapm/node`, the `MIT` SPDX identifier, and `LICENSE` unchanged.
-3. Replace the `Unreleased` changelog heading with the exact release version, then run the complete preflight below and merge it before creating the release tag.
+2. Confirm the reviewed release commit retains `private: false`, the package name `@inflowapm/node`, the `MIT` SPDX identifier, and the current `LICENSE`.
+3. Confirm the changelog heading matches the exact release version, then run the complete preflight below and merge it before creating the release tag.
 4. If the package does not yet exist on npm, perform the one-time bootstrap release from the exact clean `node-vX.Y.Z` tag with an interactive, 2FA-protected npm account:
 
    ```bash
