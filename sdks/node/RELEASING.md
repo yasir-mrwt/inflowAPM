@@ -6,24 +6,26 @@ This document covers release readiness after SDK-6. It does not authorize an npm
 
 The SDK uses the approved package name `@inflowapm/node`. The owner has confirmed control of the `@inflowapm` npm organization, and the package carries the approved MIT license in both its metadata and included license text.
 
-Actual publication has not happened. SDK-7 activates the manifest with `private: false`, but the release guard still rejects publishing unless it runs from the exact clean release tag in the approved bootstrap or GitHub release path. No release tag or npm publish has been created during preparation.
+Actual publication has not happened. The manifest is publishable with `private: false`, but the release guard rejects publishing unless it runs from the trusted GitHub release workflow or the narrowly locked first-release path documented below.
 
-The changelog now contains the versioned `0.1.0` release section. The release guard verifies the exact tag, clean worktree, `private: false`, MIT metadata and license text, and matching changelog version before any publish lifecycle can continue.
+The one-time path is limited to `@inflowapm/node@0.1.0` and requires both an explicit opt-in and the reviewed full commit SHA. It only replaces OIDC authentication for the initial package creation; every package, tag, commit, cleanliness, visibility, license, registry, changelog, build, lint, type, test, open-handle, and tarball check remains active.
 
 ## One-time npm setup
 
 1. Require account-level two-factor authentication for maintainers of the confirmed `@inflowapm` organization.
 2. Confirm the reviewed release commit retains `private: false`, the package name `@inflowapm/node`, the `MIT` SPDX identifier, and the current `LICENSE`.
 3. Confirm the changelog heading matches the exact release version, then run the complete preflight below and merge it before creating the release tag.
-4. If the package does not yet exist on npm, perform the one-time bootstrap release from the exact clean `node-vX.Y.Z` tag with an interactive, 2FA-protected npm account:
+4. If the package does not yet exist on npm, perform the one-time initial release from the exact clean, annotated `node-v0.1.0` tag with an interactive, 2FA-protected npm account. Replace the placeholder with the reviewed 40-character commit SHA; it must equal both `HEAD` and the tag target:
 
    ```bash
    cd sdks/node
    npm login
-   INFLOWAPM_BOOTSTRAP_RELEASE=true npm publish --access public --provenance=false
+   INFLOWAPM_INITIAL_PUBLISH=true \
+   INFLOWAPM_INITIAL_PUBLISH_COMMIT=<FULL_RELEASE_COMMIT_SHA> \
+   npm publish --access public --provenance=false
    ```
 
-   The bootstrap escape hatch still checks the exact version tag, clean worktree, package visibility, license metadata, and the complete `prepublishOnly` suite. Do not use a long-lived automation token. The first release cannot use trusted publishing because npm requires the package to exist before a trust relationship can be created.
+   `prepublishOnly` runs the complete `release:check` before the release guard. The guard rejects any other package name, version, tag, commit, registry, access level, license, dirty or untracked file, or GitHub Actions attempt. Do not set `INFLOWAPM_INITIAL_PUBLISH` for later versions and do not use a long-lived automation token. `--provenance=false` is intentional for this single interactive release because it does not run through the trusted CI identity.
 
 5. Configure the package's npm trusted publisher with these exact values:
 
@@ -36,8 +38,8 @@ The changelog now contains the versioned `0.1.0` release section. The release gu
    | Environment | `npm-production` |
    | Allowed action | `npm publish` |
 
-6. On GitHub, create the protected `npm-production` environment and require owner approval. Protect `node-v*` tags if repository settings permit it.
-7. After the trusted workflow succeeds, configure npm publishing access to require 2FA and disallow traditional write tokens. Revoke any temporary publishing credentials.
+6. On GitHub, create the protected `npm-production` environment and require owner approval. Protect `node-v*` tags if repository settings permit it. Do not add `NPM_TOKEN` or any npm secret: the workflow already grants only `contents: read` and `id-token: write` and authenticates through OIDC.
+7. Verify the trusted-publisher configuration with the next release workflow. Then remove the initial-publish branch and variables from `scripts/verify-release.mjs`, leaving the GitHub Actions checks unconditional. Remove the initial-publish command from this document in the same reviewed commit. Future releases must use only the GitHub Release workflow.
 
 The release workflow uses a GitHub-hosted runner, grants only `contents: read` and `id-token: write`, pins third-party actions by commit SHA, disables package-manager caching, and publishes from the release tag. npm trusted publishing supplies short-lived OIDC credentials and automatically attaches provenance for a public package from a public repository.
 
@@ -77,13 +79,30 @@ Create a GitHub Release from that tag only after CI is green. Publishing the Git
 
 ## Post-release verification
 
-After the workflow succeeds:
+After the initial manual publish succeeds, verify registry metadata before configuring trusted publishing:
 
 ```bash
-npm view @inflowapm/node@0.1.0 version dist.integrity dist.tarball
-npm install @inflowapm/node@0.1.0
+npm view @inflowapm/node@0.1.0 name version license engines dist.integrity dist.tarball
+npm view @inflowapm/node@0.1.0 --json
+npm pack @inflowapm/node@0.1.0 --dry-run
+
+VERIFY_DIR="$(mktemp -d)"
+cd "$VERIFY_DIR"
+npm init -y
+npm install @inflowapm/node@0.1.0 express@5
+node --input-type=module --eval "import { createInflowAPM } from '@inflowapm/node'; const client = createInflowAPM({ enabled: false }); await client.shutdown();"
+node --input-type=commonjs --eval "const { createInflowAPM } = require('@inflowapm/node'); const client = createInflowAPM({ enabled: false }); client.shutdown().then(() => console.log('CommonJS OK'));"
 ```
 
-Confirm the npm page is public, shows the expected README and repository, exposes provenance, and resolves both ESM and CommonJS. Update this repository's status only after those checks pass.
+Confirm the npm page is public, shows the expected README, MIT license, repository, Node engine, and tarball integrity, and that both ESM and CommonJS consumers resolve. The initial interactive release is not expected to carry OIDC provenance; later trusted-workflow releases are.
+
+## Remove the initial-release path
+
+Immediately after the package exists and npm trusted publishing is configured:
+
+1. Delete the `INFLOWAPM_INITIAL_PUBLISH` branch, `INFLOWAPM_INITIAL_PUBLISH_COMMIT` handling, and the `0.1.0` bootstrap constants from `scripts/verify-release.mjs`.
+2. Keep the shared package/license/public-registry/changelog checks and make the existing GitHub Actions release-event, repository, and exact-tag checks unconditional.
+3. Delete the manual initial-publish instructions from this document.
+4. Run `npm run release:check`, verify a local `npm publish --dry-run` is denied by the guard, and merge the removal before preparing any later release.
 
 Published versions are immutable. If a release has a non-critical problem, deprecate the affected version with a useful migration message and publish a corrected version. Reserve unpublishing for a confirmed secret, malware, or similarly severe incident, and follow npm policy rather than treating unpublish as rollback.
