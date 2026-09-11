@@ -142,7 +142,7 @@ Framework adapters call the same public capture boundary. Express owns only requ
 
 ### Deferred boundaries
 
-- SDK-5 activation: the explicitly authorized first publish and subsequent trusted-publisher setup;
+- SDK-5 activation: the first npm release and tokenless trusted-publisher setup;
 - SDK-6: developer documentation expansion and real homepage integration.
 
 ## Delivery and backpressure semantics
@@ -187,7 +187,7 @@ Automatic HTTP telemetry contains method, normalized route, actual response stat
 - exports: one explicit package root, keeping internals private;
 - target: ES2022.
 
-Node.js 24 was selected as the modern production LTS baseline; Node 26 compatibility is retained without requiring Node 26-only APIs. Native fetch and performance timing avoid runtime helper packages. SDK-5 confirms MIT licensing and `@inflowapm` scope ownership while retaining `private: true` as a hard lock against publication until separately authorized.
+Node.js 24 was selected as the modern production LTS baseline; Node 26 compatibility is retained without requiring Node 26-only APIs. Native fetch and performance timing avoid runtime helper packages. SDK-5 confirmed MIT licensing and `@inflowapm` scope ownership. The public package now publishes only through the guarded GitHub Actions trusted-publisher workflow.
 
 ## SDK-4 integration evidence
 

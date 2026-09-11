@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-`@inflowapm/node` has not been published yet, so there is no supported npm release. This table must be updated when the first release is made.
+`@inflowapm/node` is published on npm. Security fixes are supported for the current `0.1.x` release line.
 
 | Version | Supported |
 | --- | --- |
