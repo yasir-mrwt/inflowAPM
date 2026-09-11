@@ -1,6 +1,6 @@
 # InflowAPM
 
-InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. Its Next.js frontend now provides the shared visual system and responsive public marketing shell; product pages, authentication screens, and the analytics dashboard remain planned.
+InflowAPM is an open-source application performance monitoring project. Its backend accepts project-scoped telemetry, persists events asynchronously, and calculates dashboard analytics. The repository now also contains SDK-0 through SDK-5 of `@inflowapm/node`: a typed, bounded, fail-open client whose Express instrumentation has been validated from a real localhost application through BullMQ, PostgreSQL, and analytics and whose npm release path is guarded by package, CI, and provenance checks. Its Next.js frontend includes a complete responsive marketing homepage; authentication screens and the connected analytics dashboard remain planned.
 
 ## Current status
 
@@ -12,8 +12,10 @@ InflowAPM is an open-source application performance monitoring project. Its back
 | Batched telemetry ingestion | Implemented |
 | BullMQ telemetry processing and PostgreSQL bulk insert | Implemented |
 | Dashboard analytics | Implemented |
-| Frontend design system and public marketing shell | Implemented |
-| Homepage product content and authenticated dashboard | Planned |
+| Node SDK contract, client, reliability, Express instrumentation, real integration hardening, and guarded release readiness (SDK-0 through SDK-5) | Implemented |
+| Node SDK npm publication activation and expanded developer integration (SDK-6) | Awaiting explicit publication authorization; SDK-6 not started |
+| Complete public marketing homepage | Implemented |
+| Authentication experience and connected analytics dashboard | Planned |
 | CI/CD and production deployment | Planned |
 
 The backend integration tests exercise authentication, projects, ingestion, analytics, tenant isolation, safety bounds, and test-infrastructure isolation. Tests use a dedicated PostgreSQL database and Redis database.
@@ -21,7 +23,7 @@ The backend integration tests exercise authentication, projects, ingestion, anal
 ## Architecture
 
 ```text
-Browser / telemetry producer
+Server application / telemetry producer
             |
             v
        Express API
@@ -72,13 +74,13 @@ An additional BullMQ worker sends registration welcome emails through SMTP.
 - shadcn-style typed component primitives
 - Lucide React interface icons
 
-The frontend uses semantic CSS design tokens, reusable button/surface/brand primitives, and a route-group marketing layout. Recharts and data-fetching/form libraries remain planned and will be introduced only when their product phases require them.
+The frontend uses semantic CSS design tokens, reusable button/surface/brand primitives, a route-group marketing layout, and a server-rendered product homepage. The homepage connects an illustrative production incident to the real ingestion, BullMQ, PostgreSQL, analytics, and investigation workflow using lightweight native motion. It also documents the supported direct HTTP ingestion request and presents the actual open-source stack. Recharts and data-fetching/form libraries remain planned and will be introduced only when their product phases require them.
 
 ### Frontend architecture
 
 Public pages live in an App Router `(marketing)` route group so they share the navigation and footer without forcing those elements into future authenticated dashboard routes. The page and layout remain Server Components by default. Only the responsive navbar is a Client Component because dropdown state, scroll behavior, Escape handling, and mobile focus management require browser APIs.
 
-The visual system is intentionally dark and restrained: graphite/steel neutrals form the interface, cyan identifies brand actions, and green/amber/red retain stable telemetry meanings. Instrument Sans is used for human-facing UI; IBM Plex Mono is reserved for machine values such as routes, latency, identifiers, timestamps, and code.
+The visual system is intentionally dark and restrained: graphite/steel neutrals form the interface, cyan identifies brand actions, and green/amber/red retain stable telemetry meanings. Instrument Sans is used for human-facing UI; IBM Plex Mono is reserved for machine values such as routes, latency, identifiers, timestamps, and code. The homepage monitoring preview uses lightweight SVG/CSS telemetry motion with a stable reduced-motion state and no external animation request.
 
 ## Repository structure
 
@@ -107,6 +109,14 @@ InflowAPM/
 │       │   ├── marketing/
 │       │   └── ui/
 │       └── lib/
+├── sdks/
+│   └── node/
+│       ├── src/
+│       ├── tests/
+│       ├── package.json
+│       ├── ARCHITECTURE.md
+│       ├── ENGINEERING_NOTES.md
+│       └── README.md
 ├── docker-compose.yml
 └── README.md
 ```
@@ -154,6 +164,16 @@ npm run dev
 ```
 
 The frontend normally runs at `http://localhost:3000`. Add every permitted frontend origin to the comma-separated `CORS_ORIGINS` setting.
+
+To build and test the current Node SDK:
+
+```bash
+cd sdks/node
+npm install
+npm test
+```
+
+The package is not published. Its focused usage and scope are documented in `sdks/node/README.md`.
 
 ## Docker setup
 
@@ -316,13 +336,16 @@ Authorization: Bearer <token-or-project-api-key>
 
 ## Roadmap
 
+### Node SDK status
+
+SDK-0 through SDK-5 are complete at repository level. The package validates configuration and manual events, adds language-neutral service/runtime identity, buffers within a fixed memory bound, automatically sends bounded batches with controlled retry, exposes fail-open lifecycle results, and instruments Express request completion with normalized routes. Its real example is verified through localhost ingestion, BullMQ processing, PostgreSQL persistence, and dashboard analytics. SDK-5 adds MIT licensing, confirmed `@inflowapm/node` metadata, exact artifact checks, Node 24/26 CI, release identity guards, changelog/security procedures, and a tokenless trusted-publishing workflow. Actual npm publication remains disabled pending explicit authorization; SDK-6 has not started.
+
 ### Frontend status
 
-The frontend foundation includes its design tokens, typography, base UI primitives, approved logo treatment, responsive public navigation, dropdown architecture, mobile menu, and footer shell. The current root page remains a temporary design-system specimen until the homepage product-introduction phase replaces it.
+The public frontend includes its design tokens, typography, base UI primitives, approved logo treatment, responsive navigation, dropdown architecture, mobile menu, footer shell, and a complete product-led homepage. The homepage explains InflowAPM through an explicitly illustrative monitoring preview, shows how latency can progress into route failures, maps telemetry from the producing application through authenticated batch ingestion and asynchronous processing, demonstrates an investigation using real analytics fields, documents supported direct HTTP ingestion, and introduces the open-source stack. Marketing demonstrations are clearly labelled and do not claim live frontend/backend integration.
 
 ### Planned frontend
 
-- Homepage product introduction and supporting product story
 - Authentication screens and session handling
 - Project creation and selection
 - API-key onboarding experience

@@ -37,12 +37,15 @@ function BrandLockup({
   priority = false,
 }: BrandLockupProps) {
   return (
-    <span className="inline-flex items-center gap-2.5" aria-label="InflowAPM">
+    <span
+      className="inline-flex items-center gap-2.5 leading-none"
+      aria-label="InflowAPM"
+    >
       <BrandMark className={className} priority={priority} />
       <span
         aria-hidden="true"
         className={cn(
-          "text-[0.9375rem] font-semibold tracking-[-0.02em] text-text-primary",
+          "text-[0.9375rem] leading-none font-semibold tracking-[-0.02em] text-text-primary",
           labelClassName,
         )}
       >

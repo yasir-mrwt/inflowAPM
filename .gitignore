@@ -33,6 +33,9 @@ Icon\r
 coverage/
 .nyc_output/
 
+# Compiled package output
+dist/
+
 # IDE and Editor configurations
 .idea/
 .vscode/
