@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import {
+  forgotPasswordSchema,
   loginUserSchema,
   refreshTokenSchema,
   registerUserSchema,
+  resetPasswordSchema,
 } from "../schemas/user.schema.js";
 import {
   projectIdSchema,
@@ -110,6 +112,7 @@ export async function telemetryValidation(
   return next();
 }
 
+//validation middleware for analytics inputs
 export async function analyticsDashboardQueryValidation(
   req: Request,
   res: Response,
@@ -120,5 +123,33 @@ export async function analyticsDashboardQueryValidation(
     return next(result.error);
   }
   res.locals.analyticsQuery = result.data;
+  return next();
+}
+
+//validation middleware for forgot password inputs
+export async function forgotPasswordValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = forgotPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(result.error);
+  }
+  req.body = result.data;
+  return next();
+}
+
+//validation middleware for forgot password inputs
+export async function resetPasswordValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = resetPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(result.error);
+  }
+  req.body = result.data;
   return next();
 }

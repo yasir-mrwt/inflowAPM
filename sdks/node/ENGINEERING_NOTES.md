@@ -134,4 +134,4 @@ At `0.1.0`, the API is still pre-1.0, but changes should still be deliberate:
 - minor: backward-compatible capability;
 - major: incompatible public API or protocol change.
 
-SDK-5 now supplies MIT package metadata and license text, exact tarball verification, Node 24/26 CI, release identity checks, and a tokenless GitHub Actions publishing path with provenance. The owner confirmed control of the `@inflowapm` npm organization. The package intentionally retains `private: true`, and no publish has been performed or authorized.
+SDK-5 supplies MIT package metadata and license text, exact tarball verification, Node 24/26 CI, release identity checks, and a tokenless GitHub Actions publishing path with provenance. The owner confirmed control of the `@inflowapm` npm organization, and `@inflowapm/node@0.1.0` is now public on npm. Future releases are restricted to the trusted-publisher workflow.

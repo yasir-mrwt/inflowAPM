@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+//zod shema for registering user
 export const registerUserSchema = z.object({
   email: z
     .email("invalid email format")
@@ -23,6 +24,7 @@ export const registerUserSchema = z.object({
 });
 export type RegisterUserContract = z.infer<typeof registerUserSchema>;
 
+//zod shema for logging in user
 export const loginUserSchema = z.object({
   email: z
     .email("invalid email format")
@@ -36,6 +38,7 @@ export const loginUserSchema = z.object({
 });
 export type LoginUserContract = z.infer<typeof loginUserSchema>;
 
+//zod shema for refresh token to get new access token for user
 export const refreshTokenSchema = z.object({
   refresh_token: z
     .string()
@@ -43,3 +46,22 @@ export const refreshTokenSchema = z.object({
     .min(24, "refresh token cant be less than 24 characters"),
 });
 export type RefreshTokenContract = z.infer<typeof refreshTokenSchema>;
+
+//zod shema forgot password
+export const forgotPasswordSchema = z.object({
+  email: z
+    .email("invalid email format")
+    .trim()
+    .max(100, "email cannot be greater than"),
+});
+export type ForgotPasswordContract = z.infer<typeof forgotPasswordSchema>;
+
+//reset password zod schema
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100),
+});
+export type ResetPasswordContract = z.infer<typeof resetPasswordSchema>;

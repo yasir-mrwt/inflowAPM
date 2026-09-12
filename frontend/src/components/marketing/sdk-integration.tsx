@@ -139,16 +139,16 @@ export function SdkIntegration() {
                   <TerminalSquare size={16} className="text-brand" aria-hidden="true" />
                   <p className="text-sm font-medium text-text-primary">Install</p>
                 </div>
-                <span className="rounded-sm border border-warning/20 bg-warning-muted px-2 py-1 font-mono text-[0.625rem] text-warning uppercase">
-                  Release ready · Publishing next
+                <span className="rounded-sm border border-success/20 bg-success-muted px-2 py-1 font-mono text-[0.625rem] text-success uppercase">
+                  Available on npm
                 </span>
               </div>
               <div className="mt-5 overflow-x-auto border border-border bg-background p-4" role="region" aria-label="SDK installation command" tabIndex={0}>
                 <code className="whitespace-nowrap font-mono text-xs text-text-primary">{installCommand}</code>
               </div>
               <p className="mt-4 text-xs leading-5 text-text-muted">
-                The package is validated but not public yet. Repository contributors
-                can install the packed SDK locally until the controlled npm release.
+                Install the public package from npm, then configure a project key
+                and your InflowAPM endpoint.
               </p>
             </div>
             <CodePanel label=".env" code={configureExample} ariaLabel="SDK environment configuration example" />

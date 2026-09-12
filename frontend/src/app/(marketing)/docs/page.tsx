@@ -250,13 +250,13 @@ export default function DocumentationPage() {
         <article className="min-w-0 max-w-[50rem]">
           <DocSection id="getting-started" eyebrow="Getting started" title="From install to first telemetry">
             <p>Use Node.js 24 or newer. Express 4.18 and Express 5 are supported. Express is an optional peer dependency, so non-Express applications can still use the manual event API.</p>
-            <Callout warning>
-              <p><strong className="font-medium text-text-primary">Release status:</strong> <code className="font-mono text-xs">@inflowapm/node</code> is release-ready but not public on npm yet. The command below is the final install command; repository contributors should use a local package tarball until publication is approved.</p>
+            <Callout>
+              <p><strong className="font-medium text-text-primary">Available on npm:</strong> Install the public <code className="font-mono text-xs">@inflowapm/node</code> package with the command below.</p>
             </Callout>
             <CodeBlock label="terminal" language="Shell">npm install @inflowapm/node</CodeBlock>
 
             <h3 className="mt-9 text-lg font-semibold text-text-primary">1. Create a project key</h3>
-            <p className="mt-3">The authentication frontend is not implemented yet. Run the backend, register and log in through the current user API, then create a project. Copy the <code className="font-mono text-xs text-text-primary">api_key</code> from the creation response. It is returned in raw form only when the project is created.</p>
+            <p className="mt-3">The authentication screens are available, while live registration and sign-in integration are planned for F9. Until then, use the current user API to register and log in, then create a project. Copy the <code className="font-mono text-xs text-text-primary">api_key</code> from the creation response. It is returned in raw form only when the project is created.</p>
             <CodeBlock label="project-key.sh" language="Shell">{projectApiExample}</CodeBlock>
 
             <h3 className="mt-9 text-lg font-semibold text-text-primary">2. Configure the service</h3>
@@ -365,7 +365,7 @@ export default function DocumentationPage() {
               <div><h3 className="font-medium text-text-primary">No events are visible</h3><p className="mt-2">Inspect <code className="font-mono text-xs text-text-primary">getStats()</code>, verify the project key and server-reachable endpoint, install middleware before routes, and call <code className="font-mono text-xs text-text-primary">await inflow.flush()</code> while testing.</p></div>
               <div><h3 className="font-medium text-text-primary">Dynamic IDs appear in routes</h3><p className="mt-2">Confirm Express matched a declared route and that the middleware can observe it. Use <code className="font-mono text-xs text-text-primary">routePrefix</code> for mounted routers. Raw unmatched paths intentionally become <code className="font-mono text-xs text-text-primary">/__unmatched__</code>.</p></div>
               <div><h3 className="font-medium text-text-primary">The process exits before delivery</h3><p className="mt-2">Await <code className="font-mono text-xs text-text-primary">flush()</code> in short-lived tasks or <code className="font-mono text-xs text-text-primary">shutdown()</code> in the host shutdown path. Unreferenced timers do not guarantee delivery after a serverless runtime freezes an invocation.</p></div>
-              <div><h3 className="font-medium text-text-primary">Current limitations</h3><p className="mt-2">The SDK does not patch Express globally, capture stack traces automatically, persist its local buffer to disk, install process signal handlers, or provide browser/mobile instrumentation. Python support and the authenticated frontend experience are planned, not implemented.</p></div>
+              <div><h3 className="font-medium text-text-primary">Current limitations</h3><p className="mt-2">The SDK does not patch Express globally, capture stack traces automatically, persist its local buffer to disk, install process signal handlers, or provide browser/mobile instrumentation. Python support and live authentication integration are not implemented yet.</p></div>
             </div>
             <p className="mt-10 border-t border-border-subtle pt-6">For exact option ranges, typed return values, and package engineering notes, read the <a href={githubSdkUrl} target="_blank" rel="noreferrer" className="font-medium text-brand-steel underline decoration-border underline-offset-4 hover:text-brand">package README and source</a>.</p>
           </DocSection>

@@ -1,5 +1,5 @@
 import pool from "../configs/db.js";
-import { QueryResult } from "pg";
+import { PoolClient, QueryResult } from "pg";
 import { hashSecret } from "../utils/hashSecret.js";
 
 //data to be returned by the model
@@ -115,6 +115,108 @@ export async function refreshTokenVerification(
     return user;
   } catch (error: unknown) {
     console.log("error while finding user with given refresh token");
+    throw error;
+  }
+}
+
+//interface for forgot password
+export interface ForgotPasswordRow {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  expires_at: Date;
+  used_at: Date;
+}
+
+//model for forgot password functionality
+export async function forgotPasswordModel(
+  user_id: string,
+  token_hash: string,
+  expires_at: Date,
+  client?: PoolClient,
+): Promise<ForgotPasswordRow> {
+  try {
+    const runner = client || pool;
+    const result: QueryResult<ForgotPasswordRow> = await runner.query(
+      `insert into inflowapm.reset_password_tokens  (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)
+     RETURNING id, user_id, token_hash, expires_at, used_at, created_at;`,
+      [user_id, token_hash, expires_at],
+    );
+    return result.rows[0];
+  } catch (error: unknown) {
+    console.log("error while inserting into reset password token row");
+    throw error;
+  }
+}
+//check token if it exists in db or not
+export async function verifyHashTokenModel(
+  tokenHash: string,
+  client: PoolClient,
+): Promise<ForgotPasswordRow | null> {
+  try {
+    const result: QueryResult<ForgotPasswordRow> = await client.query(
+      `
+  select
+    id,
+    user_id,
+    token_hash,
+    expires_at,
+    used_at
+  from inflowapm.reset_password_tokens
+  where token_hash = $1
+    and used_at IS null
+    and expires_at > now()
+  for update;
+  `,
+      [tokenHash],
+    );
+    return result.rows[0] || null;
+  } catch (error: unknown) {
+    console.log("error while verifying hash token");
+    throw error;
+  }
+}
+
+//model for reseting password
+export async function resetPasswordModel(
+  hashedPassword: string,
+  user_id: string,
+  client: PoolClient,
+): Promise<UserRow | null> {
+  try {
+    const result: QueryResult<UserRow> = await client.query(
+      `
+  update inflowapm.users
+  set
+    password = $1,
+    refresh_token = NULL
+  where id = $2
+  returning id, email, first_name, last_name, role, created_at;  `,
+      [hashedPassword, user_id],
+    );
+    return result.rows[0] || null;
+  } catch (error: unknown) {
+    console.log("error while saving new password and reseting refresh token");
+    throw error;
+  }
+}
+
+//set the reset token as used
+export async function resetTokenAsUsedModel(
+  id: string,
+  client: PoolClient,
+): Promise<void> {
+  try {
+    const result = await client.query(
+      `
+      update inflowapm.reset_password_tokens
+set used_at = now()
+where id = $1;`,
+      [id],
+    );
+  } catch (error: unknown) {
+    console.log("error while reseting the used token");
     throw error;
   }
 }

@@ -2,7 +2,7 @@
 
 The official server-side Node.js SDK for InflowAPM. It instruments Express requests, builds privacy-conscious telemetry, buffers it within a fixed memory limit, and sends bounded batches without placing telemetry network calls directly on your application response path.
 
-`@inflowapm/node` is release-ready at version `0.1.0`, but it is **not published to npm yet**. The final install command will be:
+`@inflowapm/node` is available on npm:
 
 ```bash
 npm install @inflowapm/node
@@ -326,7 +326,7 @@ Manual metadata and optional identity fields are application-supplied data. Revi
 - Automatic exception and stack-trace capture is not implemented.
 - Buffering is in memory and best effort; it is not a durable application queue.
 - The package targets server-side Node.js, not browsers, React clients, or mobile applications.
-- The connected dashboard and authentication frontend are not implemented yet. Use the current backend APIs and repository E2E harness during development.
+- The authentication UI is available, but live registration and sign-in integration remain planned for F9. Use the current backend APIs and repository E2E harness during development.
 - Environment identity is captured, but the current frontend does not expose environment filtering.
 - Publication to npm has not occurred; use a local package path until the controlled release.
 

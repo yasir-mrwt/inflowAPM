@@ -20,6 +20,7 @@ const requiredEnvs = [
   "REDIS_URL",
   "CORS_ORIGINS",
   "MAIL_ENABLED",
+  "FRONTEND_URL",
 ];
 
 if (isTest) {
@@ -73,6 +74,7 @@ interface EnvConfiguration {
   mail_from: string | undefined;
 
   cors_origins: string;
+  frontend_url: string;
 }
 
 export const config: Readonly<EnvConfiguration> = {
@@ -94,4 +96,5 @@ export const config: Readonly<EnvConfiguration> = {
   mail_from: process.env.MAIL_FROM,
 
   cors_origins: process.env.CORS_ORIGINS || "http://localhost:3000",
+  frontend_url: process.env.FRONTEND_URL || "http://localhost:3000",
 };
