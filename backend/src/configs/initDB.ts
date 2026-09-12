@@ -49,6 +49,17 @@ export async function initializedDB(): Promise<void> {
 );
 `);
 
+    await pool.query(`
+  create table if not exists inflowapm.reset_password_tokens (
+      id uuid primary key default gen_random_uuid(),
+      user_id uuid not null references inflowapm.users(id) on delete cascade,
+      token_hash varchar(255) not null unique,
+      expires_at timestamp with time zone not null,
+      used_at timestamp with time zone null,
+      created_at timestamp with time zone default current_timestamp
+  );
+`);
+
     // Crucial High-Scale Performance Indexes
     await pool.query(
       `create index if not exists idx_telemetry_query_feed on inflowapm.telemetry_events(project_id, occurred_at desc);`,

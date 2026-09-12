@@ -1,14 +1,18 @@
 import {
+  forgotPasswordController,
   loginUserController,
   logoutUserController,
   newAccessTokenController,
   registerUserController,
+  resetPasswordController,
 } from "../controllers/user.controller.js";
 import Router, { Application } from "express";
 import {
+  forgotPasswordValidation,
   loginUserValidation,
   refreshTokenValidation,
   registerUserValidation,
+  resetPasswordValidation,
 } from "../middlewares/validation.middleware.js";
 import { authRateLimit } from "../middlewares/rateLimit.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -36,5 +40,19 @@ userRouter.post("/logout", authMiddleware, logoutUserController);
 
 //for getting new access token
 userRouter.post("/refresh", refreshTokenValidation, newAccessTokenController);
+
+//forgot password route
+userRouter.post(
+  "/forgot-password",
+  forgotPasswordValidation,
+  forgotPasswordController,
+);
+
+//reset password route
+userRouter.post(
+  "/reset-password",
+  resetPasswordValidation,
+  resetPasswordController,
+);
 
 export default userRouter;
