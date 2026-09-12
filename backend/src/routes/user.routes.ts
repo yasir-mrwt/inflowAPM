@@ -45,6 +45,7 @@ userRouter.post("/refresh", refreshTokenValidation, newAccessTokenController);
 userRouter.post(
   "/forgot-password",
   forgotPasswordValidation,
+  authRateLimit,
   forgotPasswordController,
 );
 
@@ -52,6 +53,7 @@ userRouter.post(
 userRouter.post(
   "/reset-password",
   resetPasswordValidation,
+  authRateLimit,
   resetPasswordController,
 );
 
