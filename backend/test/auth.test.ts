@@ -7,6 +7,7 @@ import redisClient from "../src/utils/redis.js";
 import jwt from "jsonwebtoken";
 import { config } from "../src/configs/env.js";
 import { initializedDB } from "../src/configs/initDB.js";
+import crypto from "node:crypto";
 
 // Primary test user used for authentication and logout verification.
 const firstUser = {
@@ -15,6 +16,7 @@ const firstUser = {
   first_name: "broski",
   last_name: "codes",
 };
+let firstUserId: string = "";
 
 // Secondary test user used for independent registration and login verification.
 const secondUser = {
@@ -28,6 +30,8 @@ const secondUser = {
 let accessToken: string = "";
 let refreshToken: string = "";
 let newToken: string = "";
+let verificationToken: string = "test-reset-token-123";
+let newPassword: string = "broskiCodesShit";
 
 describe("Authentication Flow", { concurrency: false }, () => {
   // Prepare an authenticated user before executing the test suite.
@@ -50,6 +54,7 @@ describe("Authentication Flow", { concurrency: false }, () => {
 
     refreshToken = loginResponse.body.data.refresh_token;
     accessToken = loginResponse.body.data.access_token;
+    firstUserId = loginResponse.body.data.userData.id;
 
     const storedTokenResult = await pool.query(
       `SELECT refresh_token FROM inflowapm.users WHERE email=$1;`,
@@ -67,6 +72,8 @@ describe("Authentication Flow", { concurrency: false }, () => {
     const response = await supertest(app)
       .post("/api/v1/auth/register")
       .send(secondUser);
+    assert.strictEqual(response.statusCode, 201);
+    assert.strictEqual(response.body.success, true);
   });
 
   // Verify that invalid registration data is rejected.
@@ -174,6 +181,200 @@ describe("Authentication Flow", { concurrency: false }, () => {
       .set("Authorization", `Bearer ${newToken}`);
 
     assert.strictEqual(response.statusCode, 401);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  //verifying forgot password using a valid user
+  test("POST /api/v1/auth/forgot-password -forgot password functionality check with valid user", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/forgot-password")
+      .send({ email: firstUser.email });
+
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.body.success, true);
+  });
+
+  //verifying that an unknown email still gets success msg for security porpose
+  test("POST /api/v1/auth/forgot-password - hides whether email exists", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/forgot-password")
+      .send({
+        email: `does-not-exist-${Date.now()}@gmail.com`,
+      });
+
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.body.success, true);
+  });
+
+  //verifying reset password using a valid user
+  test("POST /api/v1/auth/reset-password - resets password and revokes refresh token", async () => {
+    // Give this user an active refresh token first.
+    await supertest(app)
+      .post("/api/v1/auth/login")
+      .send({
+        email: firstUser.email,
+        password: firstUser.password,
+      })
+      .expect(200);
+
+    const beforeReset = await pool.query(
+      `SELECT refresh_token
+     FROM inflowapm.users
+     WHERE id = $1`,
+      [firstUserId],
+    );
+
+    assert.ok(beforeReset.rows[0].refresh_token);
+
+    const rawToken = `valid-reset-${Date.now()}`;
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    await pool.query(
+      `INSERT INTO inflowapm.reset_password_tokens
+      (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+      [firstUserId, tokenHash, new Date(Date.now() + 15 * 60 * 1000)],
+    );
+
+    const response = await supertest(app)
+      .post("/api/v1/auth/reset-password")
+      .send({
+        token: rawToken,
+        password: newPassword,
+      });
+
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.body.success, true);
+
+    const afterReset = await pool.query(
+      `SELECT refresh_token
+     FROM inflowapm.users
+     WHERE id = $1`,
+      [firstUserId],
+    );
+
+    assert.strictEqual(afterReset.rows[0].refresh_token, null);
+  });
+
+  // Verifying that user can login with new password.
+  test("POST /api/v1/auth/login -  Verifying that user can login with new password", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/login")
+      .send({ email: firstUser.email, password: newPassword });
+
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.body.success, true);
+    assert.strictEqual("password" in response.body.data.userData, false);
+    assert.strictEqual("refresh_token" in response.body.data.userData, false);
+  });
+
+  // Verifying again that user dont login with old password.
+  test("POST /api/v1/auth/login - Verifying again that user dont login with old password", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/login")
+      .send({ email: firstUser.email, password: firstUser.password });
+
+    assert.strictEqual(response.statusCode, 401);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  //verifying same token cannot be reused
+  test("POST /api/v1/auth/reset-password - rejects reused reset token", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/reset-password")
+      .send({
+        token: verificationToken,
+        password: "AnotherPassword123",
+      });
+
+    assert.strictEqual(response.statusCode, 400);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  //verifying fake/invalid token rejection
+  test("POST /api/v1/auth/reset-password - rejects expired reset token", async () => {
+    const rawToken = `expired-token-${Date.now()}`;
+
+    const hash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    await pool.query(
+      `INSERT INTO inflowapm.reset_password_tokens
+      (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+      [firstUserId, hash, new Date(Date.now() - 60 * 1000)],
+    );
+
+    const response = await supertest(app)
+      .post("/api/v1/auth/reset-password")
+      .send({
+        token: rawToken,
+        password: "SomeNewPassword123",
+      });
+
+    assert.strictEqual(response.statusCode, 400);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  //testing invalid old token
+  test("POST /api/v1/auth/forgot-password - invalidates previous unused reset tokens", async () => {
+    const oldRawToken = `old-token-${Date.now()}`;
+
+    const oldHash = crypto
+      .createHash("sha256")
+      .update(oldRawToken)
+      .digest("hex");
+
+    const oldToken = await pool.query(
+      `INSERT INTO inflowapm.reset_password_tokens
+      (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)
+     RETURNING id`,
+      [firstUserId, oldHash, new Date(Date.now() + 15 * 60 * 1000)],
+    );
+
+    const response = await supertest(app)
+      .post("/api/v1/auth/forgot-password")
+      .send({
+        email: firstUser.email,
+      });
+
+    assert.strictEqual(response.statusCode, 200);
+
+    const storedOldToken = await pool.query(
+      `SELECT used_at
+     FROM inflowapm.reset_password_tokens
+     WHERE id = $1`,
+      [oldToken.rows[0].id],
+    );
+
+    assert.notStrictEqual(storedOldToken.rows[0].used_at, null);
+  });
+
+  //verify missing token
+  test("POST /api/v1/auth/reset-password - rejects missing token", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/reset-password")
+      .send({
+        password: "SomePassword123",
+      });
+
+    assert.strictEqual(response.statusCode, 400);
+    assert.strictEqual(response.body.success, false);
+  });
+
+  //verify missing password
+  test("POST /api/v1/auth/reset-password - rejects missing password", async () => {
+    const response = await supertest(app)
+      .post("/api/v1/auth/reset-password")
+      .send({
+        token: "some-token",
+      });
+
+    assert.strictEqual(response.statusCode, 400);
     assert.strictEqual(response.body.success, false);
   });
 
