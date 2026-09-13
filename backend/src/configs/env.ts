@@ -21,6 +21,11 @@ const requiredEnvs = [
   "CORS_ORIGINS",
   "MAIL_ENABLED",
   "FRONTEND_URL",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "GOOGLE_REDIRECT_URI",
+  "JWT_SECRET",
+  "SESSION_SECRET",
 ];
 
 if (isTest) {
@@ -75,6 +80,12 @@ interface EnvConfiguration {
 
   cors_origins: string;
   frontend_url: string;
+
+  google_client_id: string;
+  google_client_secret: string;
+  google_redirect_uri: string;
+  jwt_secret: string;
+  session_secret: string;
 }
 
 export const config: Readonly<EnvConfiguration> = {
@@ -97,4 +108,10 @@ export const config: Readonly<EnvConfiguration> = {
 
   cors_origins: process.env.CORS_ORIGINS || "http://localhost:3000",
   frontend_url: process.env.FRONTEND_URL || "http://localhost:3000",
+
+  google_client_id: process.env.GOOGLE_CLIENT_ID!,
+  google_client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+  google_redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
+  jwt_secret: process.env.JWT_SECRET!,
+  session_secret: process.env.SESSION_SECRET!,
 };

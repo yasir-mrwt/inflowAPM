@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -75,7 +76,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="en"
       className={`${instrumentSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col"><AuthProvider>{children}</AuthProvider></body>
     </html>
   );
 }

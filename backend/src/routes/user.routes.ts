@@ -13,9 +13,16 @@ import {
   refreshTokenValidation,
   registerUserValidation,
   resetPasswordValidation,
+  googleCallbackValidation,
+  googleExchangeCodeValidation,
 } from "../middlewares/validation.middleware.js";
 import { authRateLimit } from "../middlewares/rateLimit.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import {
+  googleLoginController,
+  googleCallbackController,
+  oauthExchangeController,
+} from "../controllers/googleLogin.controller.js";
 
 const userRouter: Application = Router();
 
@@ -55,6 +62,23 @@ userRouter.post(
   resetPasswordValidation,
   authRateLimit,
   resetPasswordController,
+);
+
+//google login -Oauth
+userRouter.get("/google", googleLoginController);
+
+//google callback
+userRouter.get(
+  "/google/callback",
+  googleCallbackValidation,
+  googleCallbackController,
+);
+
+//google oauth code exchange
+userRouter.post(
+  "/oauth/exchange",
+  googleExchangeCodeValidation,
+  oauthExchangeController,
 );
 
 export default userRouter;

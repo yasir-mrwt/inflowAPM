@@ -13,6 +13,10 @@ import {
 } from "../schemas/project.schema.js";
 import { telemetrySchema } from "../schemas/telemetry.schema.js";
 import { analyticsDashboardQuerySchema } from "../schemas/analytics.schema.js";
+import {
+  googleCallbackSchema,
+  oauthExchangeSchema,
+} from "../schemas/googleLogin.schema.js";
 
 //validation middleware for registering user data
 export async function registerUserValidation(
@@ -147,6 +151,34 @@ export async function resetPasswordValidation(
   next: NextFunction,
 ): Promise<void> {
   const result = resetPasswordSchema.safeParse(req.body);
+  if (!result.success) {
+    return next(result.error);
+  }
+  req.body = result.data;
+  return next();
+}
+
+//validation middleware for google callback query values
+export async function googleCallbackValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = googleCallbackSchema.safeParse(req.query);
+  if (!result.success) {
+    return next(result.error);
+  }
+  res.locals.googleCallback = result.data;
+  return next();
+}
+
+//validation middleware for google callback query exchange code
+export async function googleExchangeCodeValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = oauthExchangeSchema.safeParse(req.body);
   if (!result.success) {
     return next(result.error);
   }
