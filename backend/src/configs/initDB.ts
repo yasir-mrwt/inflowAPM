@@ -13,7 +13,7 @@ export async function initializedDB(): Promise<void> {
         email text not null unique,
         first_name varchar(100) not null,
         last_name varchar(100) not null,
-        password text not null,
+        password text,
         refresh_token text  default null,
         role text default 'user',
         created_at timestamp default current_timestamp
@@ -49,6 +49,7 @@ export async function initializedDB(): Promise<void> {
 );
 `);
 
+    //table to store token details for reset password
     await pool.query(`
   create table if not exists inflowapm.reset_password_tokens (
       id uuid primary key default gen_random_uuid(),
@@ -58,6 +59,26 @@ export async function initializedDB(): Promise<void> {
       used_at timestamp with time zone null,
       created_at timestamp with time zone default current_timestamp
   );
+`);
+
+    //table for Oauth login bridge with user table
+    await pool.query(`
+  CREATE TABLE IF NOT EXISTS inflowapm.oauth_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL
+    REFERENCES inflowapm.users(id)
+    ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL,
+  provider_user_id VARCHAR(255) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(provider, provider_user_id),
+  UNIQUE(user_id, provider)
+);`);
+
+    // OAuth-created users initially have no local password.
+    await pool.query(`
+  ALTER TABLE inflowapm.users
+  ALTER COLUMN password DROP NOT NULL;
 `);
 
     // Crucial High-Scale Performance Indexes

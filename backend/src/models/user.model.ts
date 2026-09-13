@@ -33,16 +33,33 @@ export async function registerUserModel(
 }
 
 export interface checkUserData extends UserRow {
-  password: string;
+  password: string | null;
 }
 
 //check if the user is present or not would also be used for login
-export async function checkUser(email: string): Promise<checkUserData | null> {
+export async function checkUser(
+  email: string,
+  client?: PoolClient,
+): Promise<checkUserData | null> {
   try {
-    const result: QueryResult<checkUserData> = await pool.query(
-      `select id,email,first_name,last_name,role,refresh_token,password,created_at from inflowapm.users where email=$1;`,
+    const runner = client || pool;
+    const result: QueryResult<checkUserData> = await runner.query(
+      `
+      SELECT
+        id,
+        email,
+        first_name,
+        last_name,
+        role,
+        refresh_token,
+        password,
+        created_at
+      FROM inflowapm.users
+      WHERE email = $1;
+      `,
       [email],
     );
+
     return result.rows[0] || null;
   } catch (error: unknown) {
     console.error("error while checking user", error);
@@ -217,6 +234,139 @@ where id = $1;`,
     );
   } catch (error: unknown) {
     console.log("error while reseting the used token");
+    throw error;
+  }
+}
+
+export interface OauthRow {
+  id: string;
+  user_id: string;
+  provider: string;
+  provider_user_id: string;
+  created_at: Date;
+}
+
+//check wheather the google Oauth email is already linked with another account or not
+export async function findOAuthAccountModel(
+  provider: string,
+  providerUserId: string,
+  client?: PoolClient,
+): Promise<OauthRow | null> {
+  try {
+    const runner = client || pool;
+    const result: QueryResult<OauthRow> = await runner.query(
+      `
+      SELECT
+        id,
+        user_id,
+        provider,
+        provider_user_id,
+        created_at
+      FROM inflowapm.oauth_accounts
+      WHERE provider = $1
+        AND provider_user_id = $2
+    `,
+      [provider, providerUserId],
+    );
+
+    return result.rows[0] ?? null;
+  } catch (error: unknown) {
+    console.log("Error while finding user in db");
+    throw error;
+  }
+}
+
+// Create the actual InflowAPM user for a brand-new Google account.
+// No password is created because Google authenticated the user.
+export async function createOAuthUserModel(
+  email: string,
+  firstName: string,
+  lastName: string,
+  client: PoolClient,
+): Promise<UserRow> {
+  const result: QueryResult<UserRow> = await client.query(
+    `
+    INSERT INTO inflowapm.users (
+      email,
+      first_name,
+      last_name
+    )
+    VALUES ($1, $2, $3)
+    RETURNING
+      id,
+      email,
+      first_name,
+      last_name,
+      role,
+      refresh_token,
+      created_at;
+    `,
+    [email, firstName, lastName],
+  );
+
+  return result.rows[0];
+}
+
+// Load the actual InflowAPM user connected to an OAuth account.
+export async function findUserByIdModel(
+  userId: string,
+  client?: PoolClient,
+): Promise<UserRow | null> {
+  try {
+    const runner = client || pool;
+
+    const result: QueryResult<UserRow> = await runner.query(
+      `
+    SELECT
+      id,
+      email,
+      first_name,
+      last_name,
+      role,
+      refresh_token,
+      created_at
+    FROM inflowapm.users
+    WHERE id = $1;
+    `,
+      [userId],
+    );
+
+    return result.rows[0] || null;
+  } catch (error: unknown) {
+    console.log("Error while searching user in db through id");
+    throw error;
+  }
+}
+
+// Connect a Google account to an existing InflowAPM users.id.
+export async function createOAuthAccountModel(
+  userId: string,
+  provider: string,
+  providerUserId: string,
+  client: PoolClient,
+): Promise<OauthRow> {
+  try {
+    const result: QueryResult<OauthRow> = await client.query(
+      `
+      INSERT INTO inflowapm.oauth_accounts (
+        user_id,
+        provider,
+        provider_user_id
+      )
+      VALUES ($1, $2, $3)
+      RETURNING
+        id,
+        user_id,
+        provider,
+        provider_user_id,
+        created_at;
+      `,
+      [userId, provider, providerUserId],
+    );
+
+    return result.rows[0];
+  } catch (error: unknown) {
+    console.log("Error while creating OAuth account link");
     throw error;
   }
 }

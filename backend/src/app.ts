@@ -8,10 +8,12 @@ import telemetryRouter from "./routes/telemetry.routes.js";
 import analyticsRouter from "./routes/analytics.route.js";
 import cors from "cors";
 import { config } from "./configs/env.js";
+import { sessionMiddleware } from "./utils/session.js";
 
 const app: Application = express();
 
 app.use(express.json());
+app.use(sessionMiddleware);
 
 //cors configuration
 const allowedOrigins = config.cors_origins

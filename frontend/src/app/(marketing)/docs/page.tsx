@@ -65,7 +65,7 @@ INFLOWAPM_SERVICE=checkout-api
 INFLOWAPM_ENVIRONMENT=development
 INFLOWAPM_SERVICE_VERSION=1.4.0`;
 
-const projectApiExample = `# Authentication UI is planned. Create a project through the current API.
+const projectApiExample = `# You can create a project in the dashboard or through the API.
 curl -X POST http://127.0.0.1:5002/api/v1/auth/register \\
   -H "Content-Type: application/json" \\
   -d '{"email":"dev@example.com","password":"replace-me","first_name":"Developer","last_name":"Example"}'
@@ -256,7 +256,7 @@ export default function DocumentationPage() {
             <CodeBlock label="terminal" language="Shell">npm install @inflowapm/node</CodeBlock>
 
             <h3 className="mt-9 text-lg font-semibold text-text-primary">1. Create a project key</h3>
-            <p className="mt-3">The authentication screens are available, while live registration and sign-in integration are planned for F9. Until then, use the current user API to register and log in, then create a project. Copy the <code className="font-mono text-xs text-text-primary">api_key</code> from the creation response. It is returned in raw form only when the project is created.</p>
+            <p className="mt-3">Registration, sign-in, session refresh, sign-out, and password recovery are connected to the current authentication API. After signing in, create a project and copy the <code className="font-mono text-xs text-text-primary">api_key</code> from the creation response. It is returned in raw form only when the project is created.</p>
             <CodeBlock label="project-key.sh" language="Shell">{projectApiExample}</CodeBlock>
 
             <h3 className="mt-9 text-lg font-semibold text-text-primary">2. Configure the service</h3>
@@ -365,7 +365,7 @@ export default function DocumentationPage() {
               <div><h3 className="font-medium text-text-primary">No events are visible</h3><p className="mt-2">Inspect <code className="font-mono text-xs text-text-primary">getStats()</code>, verify the project key and server-reachable endpoint, install middleware before routes, and call <code className="font-mono text-xs text-text-primary">await inflow.flush()</code> while testing.</p></div>
               <div><h3 className="font-medium text-text-primary">Dynamic IDs appear in routes</h3><p className="mt-2">Confirm Express matched a declared route and that the middleware can observe it. Use <code className="font-mono text-xs text-text-primary">routePrefix</code> for mounted routers. Raw unmatched paths intentionally become <code className="font-mono text-xs text-text-primary">/__unmatched__</code>.</p></div>
               <div><h3 className="font-medium text-text-primary">The process exits before delivery</h3><p className="mt-2">Await <code className="font-mono text-xs text-text-primary">flush()</code> in short-lived tasks or <code className="font-mono text-xs text-text-primary">shutdown()</code> in the host shutdown path. Unreferenced timers do not guarantee delivery after a serverless runtime freezes an invocation.</p></div>
-              <div><h3 className="font-medium text-text-primary">Current limitations</h3><p className="mt-2">The SDK does not patch Express globally, capture stack traces automatically, persist its local buffer to disk, install process signal handlers, or provide browser/mobile instrumentation. Python support and live authentication integration are not implemented yet.</p></div>
+              <div><h3 className="font-medium text-text-primary">Current limitations</h3><p className="mt-2">The SDK does not patch Express globally, capture stack traces automatically, persist its local buffer to disk, install process signal handlers, or provide browser/mobile instrumentation. Python support is not implemented yet.</p></div>
             </div>
             <p className="mt-10 border-t border-border-subtle pt-6">For exact option ranges, typed return values, and package engineering notes, read the <a href={githubSdkUrl} target="_blank" rel="noreferrer" className="font-medium text-brand-steel underline decoration-border underline-offset-4 hover:text-brand">package README and source</a>.</p>
           </DocSection>
