@@ -30,7 +30,7 @@ The package exposes ESM, CommonJS, and TypeScript declarations. Express is an op
 
 ### 1. Create an InflowAPM project
 
-The authentication and project APIs exist today. The connected project dashboard UI is planned but not implemented, so local developers currently register, log in, and create projects through the API.
+The connected dashboard can register or authenticate a user, create a project, reveal its raw API key once, and select it for real overview KPIs. The same operations remain available through the API for automation.
 
 Start the local API and infrastructure from the repository root:
 
@@ -102,7 +102,7 @@ curl -X POST http://127.0.0.1:3000/checkout
 
 Postman sends and tests the request. InflowAPM observes how the server handled it after it reached Express: the method, normalized route, status, duration, and configured service identity.
 
-Telemetry ingestion is asynchronous. The current analytics API is available at `GET /api/v1/telemetry/analytics/dashboard?project_id=...&range=24h` with the user access token. The repository's `npm run test:e2e` harness also verifies the complete application-to-analytics flow. Do not wait for a nonexistent dashboard UI during local setup.
+Telemetry ingestion is asynchronous. The dashboard reads the current analytics API at `GET /api/v1/telemetry/analytics/dashboard?project_id=...&range=24h` with the user access token, and the repository's `npm run test:e2e` harness verifies the complete application-to-analytics flow.
 
 ## API key and endpoint
 
@@ -326,7 +326,7 @@ Manual metadata and optional identity fields are application-supplied data. Revi
 - Automatic exception and stack-trace capture is not implemented.
 - Buffering is in memory and best effort; it is not a durable application queue.
 - The package targets server-side Node.js, not browsers, React clients, or mobile applications.
-- The authentication UI is available, but live registration and sign-in integration remain planned for F9. Use the current backend APIs and repository E2E harness during development.
+- The application authentication UI is connected to the current backend registration, sign-in, refresh, sign-out, and password-recovery endpoints.
 - Environment identity is captured, but the current frontend does not expose environment filtering.
 - Publication to npm has not occurred; use a local package path until the controlled release.
 
