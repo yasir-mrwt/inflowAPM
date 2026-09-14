@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test tsx --test --test-concurrency=1 test/*.test.ts",
+    "typecheck": "tsc --noEmit",
     "test:auth": "docker compose exec api env NODE_ENV=test npx tsx --test test/auth.test.ts",
     "test:oauth": "docker compose exec api env NODE_ENV=test npx tsx --test test/oauth.test.ts",
     "test:project": "docker compose exec api env NODE_ENV=test npx tsx --test test/project.test.ts",

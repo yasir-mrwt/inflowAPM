@@ -3,10 +3,11 @@
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, LoaderCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import { AuthAnimation } from "@/components/auth/auth-animation";
 import { useAuth } from "@/components/auth/auth-provider";
+import { GoogleMark } from "@/components/icons/google-mark";
 import { GitHubMark } from "@/components/icons/github-mark";
 import { Button } from "@/components/ui/button";
 import { forgotPasswordRequest, googleOAuthStartUrl, resetPasswordRequest, type AuthIntent } from "@/lib/auth-api";
@@ -40,14 +41,17 @@ function PasswordField({ id, name, label, autoComplete, error, minLength = 5 }: 
 
 function OAuthOptions() {
   return (
-    <div className="grid grid-cols-2 gap-3" aria-label="Authentication providers">
-      <a href={googleOAuthStartUrl()} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-surface-inset px-3 text-xs font-medium text-text-secondary transition-colors hover:border-brand-steel/45 hover:bg-surface-hover hover:text-text-primary">
-        <span className="font-semibold" aria-hidden="true">G</span> Continue with Google
+    <div className="grid gap-3 sm:grid-cols-2" role="group" aria-label="Authentication providers">
+      <a href={googleOAuthStartUrl()} className="inline-flex min-h-11 items-center justify-center gap-2.5 rounded-md border border-brand-steel/50 bg-brand-muted/55 px-3 text-xs font-semibold text-text-primary transition-[background-color,border-color,transform] hover:border-brand-steel hover:bg-brand-muted active:translate-y-px active:bg-brand-muted/75">
+        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white" aria-hidden="true"><GoogleMark className="size-4" /></span>
+        Continue with Google
       </a>
-      <button type="button" disabled aria-disabled="true" title="GitHub authentication is coming soon" className="relative inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-surface-inset px-3 text-xs font-medium text-text-muted opacity-60">
-        <GitHubMark className="size-[15px]" /> GitHub
-        <span className="absolute -top-2 right-1 rounded-sm border border-border bg-surface-elevated px-1.5 py-0.5 font-mono text-[0.5rem] uppercase">Soon</span>
+      <button type="button" disabled aria-disabled="true" aria-describedby="github-provider-status" title="GitHub authentication is coming soon" className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2.5 rounded-md border border-border bg-surface-inset px-3 text-xs font-medium text-text-muted opacity-65 disabled:pointer-events-none">
+        <GitHubMark className="size-[17px] shrink-0" />
+        <span>Continue with GitHub</span>
+        <span className="rounded-sm border border-border-strong bg-surface-elevated px-1.5 py-0.5 font-mono text-[0.5rem] tracking-[0.08em] uppercase">Soon</span>
       </button>
+      <span id="github-provider-status" className="sr-only">GitHub authentication is unavailable and coming soon.</span>
     </div>
   );
 }
@@ -93,15 +97,11 @@ function errorMessage(error: unknown): string {
 
 export function AuthForm({ mode, resetToken }: { mode: AuthIntent; resetToken?: string }) {
   const router = useRouter();
-  const { login, register, status: authStatus } = useAuth();
+  const { login, register } = useAuth();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>(null);
   const [submitting, setSubmitting] = useState(false);
   const copy = modeCopy[mode];
-
-  useEffect(() => {
-    if ((mode === "login" || mode === "register") && authStatus === "authenticated") router.replace("/dashboard");
-  }, [authStatus, mode, router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

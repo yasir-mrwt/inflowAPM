@@ -177,19 +177,31 @@ The package is release-ready but not published. Its manifest is activated for th
 
 ## Docker setup
 
-Create the root and backend environment files from their examples, then start the API and its infrastructure:
+Create the root and backend environment files from their examples, then start the complete local stack from the repository root:
 
 ```bash
 docker compose up --build
 ```
 
-This starts:
+This single command builds and starts:
 
+- Next.js frontend at `http://localhost:3000`
 - Express API at `http://localhost:5002`
 - PostgreSQL inside the Compose network
 - Redis inside the Compose network
+- the existing telemetry and optional email workers within the API service
 
-The frontend is not currently part of `docker-compose.yml`.
+The frontend uses `http://localhost:5002` for browser-side API requests. The API uses the Compose service names `postgres` and `redis` for its internal database, test database, cache, queue, and session connections.
+
+For Google sign-in, add `http://localhost:5002/api/v1/auth/google/callback` to the OAuth client’s authorized redirect URIs. Compose supplies this callback URL to the backend and returns successful sign-ins to the frontend at `http://localhost:3000`.
+
+Stop the stack without deleting its database or Redis volumes:
+
+```bash
+docker compose down
+```
+
+Add `-v` only when you intentionally want to delete local PostgreSQL and Redis data.
 
 Secrets are supplied through ignored environment files and are not embedded in `docker-compose.yml`.
 

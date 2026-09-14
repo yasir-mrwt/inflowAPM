@@ -1,17 +1,20 @@
 "use client";
 
-import { Check, Copy, FolderKanban, LoaderCircle, Plus, RefreshCw, ShieldAlert, X } from "lucide-react";
+import { Check, CircleCheck, Copy, FolderKanban, LoaderCircle, Plus, RadioTower, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
+import { useAnalytics } from "@/components/analytics/analytics-provider";
 import { useProjects } from "@/components/projects/projects-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function ProjectsView() {
   const { projects, selectedProject, status, error, newCredential, selectProject, createProject, dismissCredential, reload } = useProjects();
+  const { analytics, status: analyticsStatus, reload: reloadAnalytics } = useAnalytics();
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedTarget, setCopiedTarget] = useState<"key" | "install" | "snippet" | null>(null);
+  const activeCredential = newCredential?.projectId === selectedProject?.id ? newCredential : null;
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,7 +28,7 @@ export function ProjectsView() {
     setCreating(true);
     try {
       await createProject(name);
-      setCopied(false);
+      setCopiedTarget(null);
       form.reset();
     } catch (reason) {
       setFormError(reason instanceof Error ? reason.message : "The project could not be created.");
@@ -34,15 +37,29 @@ export function ProjectsView() {
     }
   }
 
-  async function copyApiKey() {
-    if (!newCredential) return;
+  async function copyText(value: string, target: "key" | "install" | "snippet") {
     try {
-      await navigator.clipboard.writeText(newCredential.apiKey);
-      setCopied(true);
+      await navigator.clipboard.writeText(value);
+      setCopiedTarget(target);
     } catch {
-      setFormError("Copying was blocked. Select the API key and copy it manually.");
+      setFormError("Copying was blocked. Select the text and copy it manually.");
     }
   }
+
+  const installCommand = "npm install @inflowapm/node";
+  const serviceName = activeCredential?.projectName.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-service";
+  const integrationSnippet = activeCredential ? `import { InflowAPM } from "@inflowapm/node";
+
+const inflow = new InflowAPM({
+  apiKey: "${activeCredential.apiKey}",
+  endpoint: "http://localhost:5002",
+  service: "${serviceName}",
+  environment: "development",
+});
+
+app.use(inflow.express());` : "";
+  const requestCount = analytics?.overview.total_requests ?? 0;
+  const connected = analyticsStatus === "ready" && requestCount > 0;
 
   return (
     <div>
@@ -50,20 +67,31 @@ export function ProjectsView() {
       <h1 className="type-page mt-3">Projects</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary">Create and select the real application workspace that scopes your telemetry and analytics.</p>
 
-      {newCredential ? (
-        <section className="mt-7 border border-warning/35 bg-warning-muted/35 p-4 sm:p-5" aria-labelledby="api-key-title">
-          <div className="flex items-start gap-3">
+      {activeCredential ? (
+        <section className="mt-7 border border-warning/35 bg-warning-muted/25" aria-labelledby="api-key-title">
+          <div className="flex items-start gap-3 border-b border-warning/20 p-4 sm:p-5">
             <ShieldAlert size={18} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-              <h2 id="api-key-title" className="text-sm font-semibold text-text-primary">Save the API key for {newCredential.projectName}</h2>
-              <p className="mt-1 text-xs leading-5 text-text-secondary">This raw key is returned only when the project is created. Store it securely before dismissing this message.</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-brand">{newCredential.apiKey}</code>
-                <Button type="button" variant="secondary" onClick={copyApiKey}>{copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}{copied ? "Copied" : "Copy"}</Button>
-                <Button type="button" variant="ghost" onClick={dismissCredential} aria-label="Dismiss API key"><X size={16} aria-hidden="true" /></Button>
-              </div>
+            <div className="min-w-0 flex-1"><h2 id="api-key-title" className="text-sm font-semibold text-text-primary">Connect {activeCredential.projectName}</h2><p className="mt-1 text-xs leading-5 text-text-secondary">The raw API key appears only now. Store it as a server-side secret before dismissing this guide.</p></div>
+            <Button type="button" variant="ghost" size="icon" className="-mt-2 -mr-2 size-9" onClick={dismissCredential} aria-label="Dismiss API key and setup guide"><X size={16} aria-hidden="true" /></Button>
+          </div>
+          <ol className="divide-y divide-warning/15">
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">1</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Save the project API key</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-brand">{activeCredential.apiKey}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(activeCredential.apiKey, "key")}>{copiedTarget === "key" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "key" ? "Copied" : "Copy key"}</Button></div></div></li>
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">2</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Install the Node.js SDK</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-text-secondary">{installCommand}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(installCommand, "install")}>{copiedTarget === "install" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "install" ? "Copied" : "Copy"}</Button></div></div></li>
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">3</span><div className="min-w-0"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-text-primary">Add Express instrumentation</p><Button type="button" variant="ghost" size="sm" onClick={() => void copyText(integrationSnippet, "snippet")}>{copiedTarget === "snippet" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "snippet" ? "Copied" : "Copy snippet"}</Button></div><pre className="mt-3 max-w-full overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-[0.6875rem] leading-5 text-text-secondary"><code>{integrationSnippet}</code></pre></div></li>
+          </ol>
+        </section>
+      ) : null}
+
+      {selectedProject ? (
+        <section className="mt-5 flex flex-col gap-3 border border-border-subtle bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Telemetry connection status" aria-live="polite">
+          <div className="flex min-w-0 items-center gap-3">
+            {analyticsStatus === "loading" || analyticsStatus === "idle" ? <LoaderCircle size={16} className="shrink-0 animate-spin text-brand-steel motion-reduce:animate-none" aria-hidden="true" /> : connected ? <CircleCheck size={16} className="shrink-0 text-success" aria-hidden="true" /> : <RadioTower size={16} className="shrink-0 text-warning" aria-hidden="true" />}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-text-primary">{analyticsStatus === "loading" || analyticsStatus === "idle" ? "Checking telemetry connection" : connected ? "Connected · First telemetry received" : analyticsStatus === "error" ? "Connection status unavailable" : "Waiting for telemetry"}</p>
+              <p className="mt-0.5 truncate text-[0.6875rem] text-text-muted">{connected ? `${requestCount.toLocaleString()} real HTTP ${requestCount === 1 ? "request" : "requests"} received in the selected range.` : analyticsStatus === "error" ? "The analytics response could not be loaded. Try again." : `Send a request through ${selectedProject.name} after installing the SDK.`}</p>
             </div>
           </div>
+          {!connected && analyticsStatus !== "loading" ? <Button type="button" variant="ghost" size="sm" onClick={reloadAnalytics}><RefreshCw size={14} aria-hidden="true" />Check again</Button> : null}
         </section>
       ) : null}
 

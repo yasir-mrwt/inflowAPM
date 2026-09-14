@@ -1,4 +1,4 @@
-import { Activity, DatabaseZap, ShieldCheck } from "lucide-react";
+import { Activity, ArrowLeft, DatabaseZap, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -70,7 +70,13 @@ export function AuthShell({
           </Link>
         </header>
         <div className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8 lg:px-12 lg:py-16">
-          <div className="w-full max-w-[28rem]">{children}</div>
+          <div className="w-full max-w-[28rem]">
+            <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary">
+              <ArrowLeft size={15} aria-hidden="true" />
+              Back to home
+            </Link>
+            {children}
+          </div>
         </div>
         <footer className="px-5 pb-6 text-center font-mono text-[0.625rem] text-text-muted sm:px-8">Open-source observability · Built for API teams</footer>
       </section>
