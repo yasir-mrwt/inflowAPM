@@ -1,12 +1,13 @@
 "use client";
 
-import { Activity, Bug, FolderKanban, Gauge, LogOut, Menu, RadioTower, Route, Settings, X } from "lucide-react";
+import { Activity, Bug, ChevronLeft, ChevronRight, FolderKanban, Gauge, LogOut, Menu, RadioTower, Route, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { BrandLockup } from "@/components/brand/brand-mark";
+import { UserAvatar } from "@/components/auth/user-avatar";
+import { BrandLockup, BrandMark } from "@/components/brand/brand-mark";
 import { useProjects } from "@/components/projects/projects-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,17 +20,34 @@ const navigation = [
   { label: "Errors", href: "/dashboard/errors", icon: Bug },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ] as const;
+const SIDEBAR_PREFERENCE_KEY = "inflowapm.dashboard.sidebar-collapsed";
 
-function Account({ compact = false, onLogout }: { compact?: boolean; onLogout: () => void }) {
+function SidebarTooltip({ id, children }: { id: string; children: ReactNode }) {
+  return <span id={id} role="tooltip" className="pointer-events-none absolute left-full z-30 ml-3 hidden whitespace-nowrap rounded-md border border-border bg-surface-elevated px-2.5 py-1.5 text-xs text-text-primary shadow-xl group-hover:block group-focus-visible:block lg:block lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-visible:opacity-100">{children}</span>;
+}
+
+function Account({ collapsed = false, onLogout }: { collapsed?: boolean; onLogout: () => void }) {
   const { user } = useAuth();
-  const initials = `${user?.first_name.at(0) ?? ""}${user?.last_name.at(0) ?? ""}`.toUpperCase() || "IA";
+  if (!user) return null;
+
+  if (collapsed) {
+    return (
+      <div className="border-t border-border-subtle p-2">
+        <div className="flex justify-center py-2" title={`${user.first_name} ${user.last_name}`}><UserAvatar user={user} /></div>
+        <button type="button" onClick={onLogout} aria-describedby="logout-tooltip" className="group relative mt-1 flex size-10 w-full items-center justify-center rounded-md text-text-secondary hover:bg-surface-hover hover:text-text-primary" aria-label="Sign out">
+          <LogOut size={16} aria-hidden="true" /><SidebarTooltip id="logout-tooltip">Sign out</SidebarTooltip>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("border-t border-border-subtle", compact ? "p-4" : "p-3")}>
+    <div className="border-t border-border-subtle p-3">
       <div className="flex min-w-0 items-center gap-3 px-2 py-2">
-        <span className="grid size-9 shrink-0 place-items-center rounded-md border border-brand-steel/25 bg-brand-muted font-mono text-xs font-semibold text-brand">{initials}</span>
+        <UserAvatar user={user} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-text-primary">{user?.first_name} {user?.last_name}</span>
-          <span className="block truncate text-xs text-text-muted">{user?.email}</span>
+          <span className="block truncate text-sm font-medium text-text-primary">{user.first_name} {user.last_name}</span>
+          <span className="block truncate text-xs text-text-muted">{user.email}</span>
         </span>
       </div>
       <button type="button" onClick={onLogout} className="mt-1 flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary">
@@ -39,17 +57,18 @@ function Account({ compact = false, onLogout }: { compact?: boolean; onLogout: (
   );
 }
 
-function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+function Navigation({ collapsed = false, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Application navigation" className="flex-1 space-y-1 px-3 py-5">
-      <p className="type-meta mb-3 px-3 text-text-muted">Workspace</p>
+    <nav aria-label="Application navigation" className={cn("flex-1 space-y-1 py-5", collapsed ? "px-2" : "px-3")}>
+      <p className={cn("type-meta mb-3 text-text-muted", collapsed ? "sr-only" : "px-3")}>Workspace</p>
       {navigation.map(({ label, href, icon: Icon }) => {
         const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
         return (
-          <Link key={href} href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={cn("flex min-h-10 items-center gap-3 rounded-md border-l-2 px-3 text-sm transition-colors", active ? "border-brand bg-brand-muted/65 text-text-primary" : "border-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary")}>
+          <Link key={href} href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} aria-describedby={collapsed ? `nav-tooltip-${label.replaceAll(" ", "-").toLowerCase()}` : undefined} className={cn("group relative flex min-h-10 items-center rounded-md border-l-2 text-sm transition-colors", collapsed ? "justify-center px-0" : "gap-3 px-3", active ? "border-brand bg-brand-muted/65 text-text-primary" : "border-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary")}>
             <Icon size={16} className={active ? "text-brand" : "text-text-muted"} aria-hidden="true" />
-            {label}
+            <span className={collapsed ? "sr-only" : undefined}>{label}</span>
+            {collapsed ? <SidebarTooltip id={`nav-tooltip-${label.replaceAll(" ", "-").toLowerCase()}`}>{label}</SidebarTooltip> : null}
           </Link>
         );
       })}
@@ -63,13 +82,40 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
+  const restoreMenuFocusRef = useRef(false);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        setSidebarCollapsed(window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY) === "true");
+      } catch {
+        setSidebarCollapsed(false);
+      }
+    });
+  }, []);
+
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      try { window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, String(next)); } catch { /* preference storage is optional */ }
+      return next;
+    });
+  }
 
   function closeMobileNavigation() {
+    restoreMenuFocusRef.current = true;
     setMobileOpen(false);
-    requestAnimationFrame(() => menuButtonRef.current?.focus());
   }
+
+  useEffect(() => {
+    if (!mobileOpen && restoreMenuFocusRef.current) {
+      restoreMenuFocusRef.current = false;
+      menuButtonRef.current?.focus();
+    }
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -96,11 +142,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-svh bg-background text-text-primary lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-[17rem] flex-col border-r border-border-subtle bg-surface-inset lg:flex">
-        <Link href="/dashboard" className="flex h-18 items-center border-b border-border-subtle px-5" aria-label="InflowAPM dashboard"><BrandLockup className="size-8" priority /></Link>
-        <Navigation />
-        <Account onLogout={handleLogout} />
+    <div className={cn("min-h-svh bg-background text-text-primary lg:grid", sidebarCollapsed ? "lg:grid-cols-[5rem_minmax(0,1fr)]" : "lg:grid-cols-[17rem_minmax(0,1fr)]")}>
+      <aside id="desktop-dashboard-sidebar" className={cn("fixed inset-y-0 left-0 z-20 hidden flex-col border-r border-border-subtle bg-surface-inset lg:flex", sidebarCollapsed ? "w-20" : "w-[17rem]")}>
+        <div className={cn("flex h-16 shrink-0 items-center border-b border-border-subtle", sidebarCollapsed ? "justify-between px-2" : "justify-between px-4")}>
+          <Link href="/dashboard" aria-label="InflowAPM dashboard">{sidebarCollapsed ? <BrandMark className="size-8" priority /> : <BrandLockup className="size-8" priority />}</Link>
+          <Button type="button" variant="ghost" size="icon" className="size-8" onClick={toggleSidebar} aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!sidebarCollapsed} aria-controls="desktop-dashboard-sidebar" title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+            {sidebarCollapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
+          </Button>
+        </div>
+        <Navigation collapsed={sidebarCollapsed} />
+        <Account collapsed={sidebarCollapsed} onLogout={handleLogout} />
       </aside>
 
       <div className="min-w-0 lg:col-start-2">
@@ -126,7 +177,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <aside ref={drawerRef} className="relative flex h-full w-[min(19rem,88vw)] flex-col border-r border-border bg-surface-inset shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-border-subtle px-4"><BrandLockup className="size-8" /><Button type="button" variant="ghost" size="icon" autoFocus onClick={closeMobileNavigation} aria-label="Close navigation"><X size={19} aria-hidden="true" /></Button></div>
             <Navigation onNavigate={closeMobileNavigation} />
-            <Account compact onLogout={handleLogout} />
+            <Account onLogout={handleLogout} />
           </aside>
         </div>
       ) : null}
