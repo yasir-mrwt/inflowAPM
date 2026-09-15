@@ -1,28 +1,51 @@
-import nodemailer from "nodemailer";
+import {
+  Resend,
+  type CreateEmailOptions,
+  type CreateEmailResponse,
+} from "resend";
 import { config } from "./env.js";
-import SMTPTransport from "nodemailer/lib/smtp-transport/index.js";
 
-const smtpOptions: SMTPTransport.Options = {
-  host: config.mail_host,
-  port: Number(config.mail_port),
-  secure: Number(config.mail_port) === 465,
-  auth: {
-    user: config.mail_user,
-    pass: config.mail_password,
-  },
-};
-export const mailTransporter = nodemailer.createTransport(smtpOptions);
+export type ResendEmailSender = (
+  payload: CreateEmailOptions,
+) => Promise<CreateEmailResponse>;
 
-export async function verifyMailConnection(): Promise<void> {
-  try {
-    await mailTransporter.verify();
-    console.log(
-      "Nodemailer SMTP Mail server connection channel established successfully!",
-    );
-  } catch (error: unknown) {
-    console.error(
-      "CRITICAL: Failed to establish SMTP mail transporter link layer handshake:",
-      error,
-    );
+let resendClient: Resend | undefined;
+
+function getResendClient(): Resend {
+  if (!config.mail_enabled || !config.resend_api_key) {
+    throw new Error("Resend mail delivery is not configured");
   }
+
+  resendClient ??= new Resend(config.resend_api_key);
+  return resendClient;
+}
+
+export function getMailFrom(): string {
+  if (!config.mail_enabled || !config.mail_from) {
+    throw new Error("Resend mail delivery is not configured");
+  }
+
+  return config.mail_from;
+}
+
+const sendWithConfiguredClient: ResendEmailSender = (payload) =>
+  getResendClient().emails.send(payload);
+
+export async function sendResendEmail(
+  payload: CreateEmailOptions,
+  sender: ResendEmailSender = sendWithConfiguredClient,
+): Promise<string> {
+  let response: CreateEmailResponse;
+
+  try {
+    response = await sender(payload);
+  } catch (error) {
+    throw new Error("Resend email request failed", { cause: error });
+  }
+
+  if (response.error) {
+    throw new Error(`Resend rejected email: ${response.error.message}`);
+  }
+
+  return response.data.id;
 }

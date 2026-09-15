@@ -25,4 +25,13 @@ export type EmailJobPayload =
 // Instantiate the permanent, shared registration email queue line block
 export const emailQueue = new Queue<EmailJobPayload>("EmailQueue", {
   connection: redisConnectionOptions,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: "exponential",
+      delay: 5_000,
+    },
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
 });

@@ -1,20 +1,22 @@
-# 1. Base Image: Use the official lightweight Node.js v26 Alpine Linux build
-FROM node:26-alpine
+FROM node:26-alpine AS build
 
-# 2. Establish working directory inside the container
 WORKDIR /usr/src/app
 
-# 3. Copy package metadata files first to exploit Docker layer caching speeds
 COPY package*.json ./
-
-# 4. Install project dependencies deterministically inside the image container
 RUN npm ci --no-audit --no-fund
-
-# 5. Copy the rest of your local codebase folders
 COPY . .
+RUN npm run build
 
-# 6. Expose the port your Express app uses
+FROM node:26-alpine AS runtime
+
+ENV NODE_ENV=production
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY --from=build /usr/src/app/dist ./dist
+
 EXPOSE 5002
 
-# 7. Boot the server using your custom package dev script
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/server.js"]

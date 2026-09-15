@@ -8,17 +8,26 @@ import telemetryRouter from "./routes/telemetry.routes.js";
 import analyticsRouter from "./routes/analytics.route.js";
 import cors from "cors";
 import { config } from "./configs/env.js";
+import pool from "./configs/db.js";
 import { sessionMiddleware } from "./utils/session.js";
+import redisClient from "./utils/redis.js";
 
 const app: Application = express();
+
+if (config.node_env === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.use(express.json());
 app.use(sessionMiddleware);
 
 //cors configuration
-const allowedOrigins = config.cors_origins
-  .split(",")
-  .map((origin) => origin.trim());
+const allowedOrigins = new Set(
+  [...config.cors_origins.split(","), config.frontend_url]
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => new URL(origin).origin),
+);
 
 //cors first
 app.use(
@@ -27,7 +36,7 @@ app.use(
       if (!origin) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
       return callback(new Error("not allowed by CORS"));
@@ -38,11 +47,19 @@ app.use(
 );
 
 //health check route
-app.get("/health", (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: "UP",
-    timestamp: new Date().toISOString(),
-  });
+app.get("/health", async (_req: Request, res: Response) => {
+  try {
+    await Promise.all([pool.query("SELECT 1"), redisClient.ping()]);
+    res.status(200).json({
+      status: "UP",
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    res.status(503).json({
+      status: "DOWN",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 //for authentication routes
