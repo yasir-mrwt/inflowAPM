@@ -29,7 +29,7 @@ export function KpiOverview() {
       <AnalyticsToolbar />
 
       {status === "error" ? <div role="alert" className="mt-5 border border-danger/25 bg-danger-muted/35 p-4 text-sm text-danger">{error}</div> : null}
-      <div className="mt-5 grid gap-px overflow-hidden border border-border-subtle bg-border-subtle sm:grid-cols-2 xl:grid-cols-3" aria-busy={status === "loading"}>
+      <div className="mt-5 grid gap-px overflow-hidden border border-border-subtle bg-border-subtle sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-busy={status === "loading"}>
         {cards.map(({ label, value, unit, icon: Icon }) => <article key={label} className="min-w-0 bg-surface p-5"><div className="flex items-center justify-between"><p className="type-meta text-text-muted">{label}</p><Icon size={15} className="text-brand-steel" aria-hidden="true" /></div><p className="mt-6 font-mono text-2xl font-medium tracking-[-0.04em] text-text-primary">{status === "loading" ? <span className="text-text-muted" aria-label="Loading">—</span> : (value ?? "—")}</p><p className="mt-1 font-mono text-[0.625rem] text-text-muted">{unit}</p></article>)}
       </div>
       {status === "ready" && overview?.total_requests === 0 ? <p className="mt-4 border-l-2 border-brand-steel px-3 text-xs leading-5 text-text-muted">No HTTP telemetry was received for this project in the selected range. These zero values come directly from the analytics API.</p> : null}
