@@ -1,3 +1,4 @@
+import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
 import { KpiOverview } from "@/components/dashboard/kpi-overview";
 
 export default function DashboardPage() {
@@ -7,6 +8,7 @@ export default function DashboardPage() {
       <h1 className="type-page mt-3">Application health</h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary">Monitor real request volume, errors, latency, and throughput for the active project.</p>
       <KpiOverview />
+      <AnalyticsOverview />
     </div>
   );
 }

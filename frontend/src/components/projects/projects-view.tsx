@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CircleCheck, Copy, FolderKanban, LoaderCircle, Plus, RadioTower, RefreshCw, ShieldAlert, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { useAnalytics } from "@/components/analytics/analytics-provider";
 import { useProjects } from "@/components/projects/projects-provider";
@@ -13,8 +13,18 @@ export function ProjectsView() {
   const { analytics, status: analyticsStatus, reload: reloadAnalytics } = useAnalytics();
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
-  const [copiedTarget, setCopiedTarget] = useState<"key" | "install" | "snippet" | null>(null);
+  const [copiedState, setCopiedState] = useState<{ target: "key" | "install" | "snippet"; scope: string } | null>(null);
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeCredential = newCredential?.projectId === selectedProject?.id ? newCredential : null;
+  const credentialScope = activeCredential ? `${activeCredential.projectId}:${activeCredential.apiKey}` : "no-active-credential";
+
+  useEffect(() => () => {
+    if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+  }, []);
+
+  function isCopied(target: "key" | "install" | "snippet"): boolean {
+    return copiedState?.target === target && copiedState.scope === credentialScope;
+  }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +38,7 @@ export function ProjectsView() {
     setCreating(true);
     try {
       await createProject(name);
-      setCopiedTarget(null);
+      setCopiedState(null);
       form.reset();
     } catch (reason) {
       setFormError(reason instanceof Error ? reason.message : "The project could not be created.");
@@ -40,8 +50,19 @@ export function ProjectsView() {
   async function copyText(value: string, target: "key" | "install" | "snippet") {
     try {
       await navigator.clipboard.writeText(value);
-      setCopiedTarget(target);
+      setFormError("");
+      if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
+      setCopiedState({ target, scope: credentialScope });
+      copyResetTimer.current = setTimeout(() => {
+        setCopiedState(null);
+        copyResetTimer.current = null;
+      }, 1_800);
     } catch {
+      if (copyResetTimer.current) {
+        clearTimeout(copyResetTimer.current);
+        copyResetTimer.current = null;
+      }
+      setCopiedState(null);
       setFormError("Copying was blocked. Select the text and copy it manually.");
     }
   }
@@ -75,9 +96,9 @@ app.use(inflow.express());` : "";
             <Button type="button" variant="ghost" size="icon" className="-mt-2 -mr-2 size-9" onClick={dismissCredential} aria-label="Dismiss API key and setup guide"><X size={16} aria-hidden="true" /></Button>
           </div>
           <ol className="divide-y divide-warning/15">
-            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">1</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Save the project API key</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-brand">{activeCredential.apiKey}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(activeCredential.apiKey, "key")}>{copiedTarget === "key" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "key" ? "Copied" : "Copy key"}</Button></div></div></li>
-            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">2</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Install the Node.js SDK</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-text-secondary">{installCommand}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(installCommand, "install")}>{copiedTarget === "install" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "install" ? "Copied" : "Copy"}</Button></div></div></li>
-            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">3</span><div className="min-w-0"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-text-primary">Add Express instrumentation</p><Button type="button" variant="ghost" size="sm" onClick={() => void copyText(integrationSnippet, "snippet")}>{copiedTarget === "snippet" ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copiedTarget === "snippet" ? "Copied" : "Copy snippet"}</Button></div><pre className="mt-3 max-w-full overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-[0.6875rem] leading-5 text-text-secondary"><code>{integrationSnippet}</code></pre></div></li>
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">1</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Save the project API key</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-brand">{activeCredential.apiKey}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(activeCredential.apiKey, "key")}>{isCopied("key") ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}<span aria-live="polite">{isCopied("key") ? "Copied" : "Copy key"}</span></Button></div></div></li>
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">2</span><div className="min-w-0"><p className="text-xs font-semibold text-text-primary">Install the Node.js SDK</p><div className="mt-3 flex flex-col gap-2 sm:flex-row"><code className="min-w-0 flex-1 overflow-x-auto rounded-md border border-border bg-background px-3 py-2.5 font-mono text-xs text-text-secondary">{installCommand}</code><Button type="button" variant="secondary" size="sm" onClick={() => void copyText(installCommand, "install")}>{isCopied("install") ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}<span aria-live="polite">{isCopied("install") ? "Copied" : "Copy"}</span></Button></div></div></li>
+            <li className="grid gap-3 p-4 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:p-5"><span className="grid size-6 place-items-center rounded-full border border-warning/35 font-mono text-[0.625rem] text-warning">3</span><div className="min-w-0"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-text-primary">Add Express instrumentation</p><Button type="button" variant="ghost" size="sm" onClick={() => void copyText(integrationSnippet, "snippet")}>{isCopied("snippet") ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}<span aria-live="polite">{isCopied("snippet") ? "Copied" : "Copy snippet"}</span></Button></div><pre className="mt-3 max-w-full overflow-x-auto rounded-md border border-border bg-background p-3 font-mono text-[0.6875rem] leading-5 text-text-secondary"><code>{integrationSnippet}</code></pre></div></li>
           </ol>
         </section>
       ) : null}
