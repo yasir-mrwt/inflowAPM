@@ -2,7 +2,7 @@ import { Redis } from "ioredis";
 import type { ConnectionOptions } from "bullmq";
 import { config } from "../configs/env.js";
 
-const redisClient = new Redis(config.redis_url || "redis://redis:6379");
+const redisClient = new Redis(config.redis_url);
 
 redisClient.on("connect", () => {
   console.log("connected to redis successfully");

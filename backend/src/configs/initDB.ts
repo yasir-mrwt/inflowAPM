@@ -1,14 +1,19 @@
 import pool from "./db.js";
 
 export async function initializedDB(): Promise<void> {
+  const client = await pool.connect();
   try {
-    await pool.query(`create extension if not exists pgcrypto;`);
+    await client.query("BEGIN");
+    await client.query(
+      "SELECT pg_advisory_xact_lock(hashtext('inflowapm_schema_init_v1'));",
+    );
+    await client.query(`create extension if not exists pgcrypto;`);
 
     //creating inflowapm database
-    await pool.query(`create schema if not exists inflowapm;`);
+    await client.query(`create schema if not exists inflowapm;`);
 
     //user table
-    await pool.query(`create table if not exists inflowapm.users(
+    await client.query(`create table if not exists inflowapm.users(
         id uuid primary key default gen_random_uuid(),
         email text not null unique,
         first_name varchar(100) not null,
@@ -20,7 +25,7 @@ export async function initializedDB(): Promise<void> {
         );`);
 
     //project information table
-    await pool.query(`create table if not exists inflowapm.projects(
+    await client.query(`create table if not exists inflowapm.projects(
             id uuid primary key default gen_random_uuid(),
             name varchar(100) not null,
             api_key varchar(64) unique not null,
@@ -29,7 +34,7 @@ export async function initializedDB(): Promise<void> {
             );`);
 
     //telemetry events table
-    await pool.query(`create table if not exists inflowapm.telemetry_events (
+    await client.query(`create table if not exists inflowapm.telemetry_events (
     id bigint generated always as identity primary key,
     project_id uuid not null references inflowapm.projects(id) on delete cascade,
     type varchar(50) not null,
@@ -50,7 +55,7 @@ export async function initializedDB(): Promise<void> {
 `);
 
     //table to store token details for reset password
-    await pool.query(`
+    await client.query(`
   create table if not exists inflowapm.reset_password_tokens (
       id uuid primary key default gen_random_uuid(),
       user_id uuid not null references inflowapm.users(id) on delete cascade,
@@ -62,7 +67,7 @@ export async function initializedDB(): Promise<void> {
 `);
 
     //table for Oauth login bridge with user table
-    await pool.query(`
+    await client.query(`
   CREATE TABLE IF NOT EXISTS inflowapm.oauth_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL
@@ -76,28 +81,33 @@ export async function initializedDB(): Promise<void> {
 );`);
 
     // OAuth-created users initially have no local password.
-    await pool.query(`
+    await client.query(`
   ALTER TABLE inflowapm.users
   ALTER COLUMN password DROP NOT NULL;
 `);
 
     // Crucial High-Scale Performance Indexes
-    await pool.query(
+    await client.query(
       `create index if not exists idx_telemetry_query_feed on inflowapm.telemetry_events(project_id, occurred_at desc);`,
     );
 
-    await pool.query(
+    await client.query(
       `create index if not exists idx_telemetry_aggregation on inflowapm.telemetry_events(project_id,route,occurred_at desc);`,
     );
+
+    await client.query("COMMIT");
 
     console.log(
       "InflowAPM Database layers initialized completely successfully!",
     );
   } catch (error: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
     console.error(
       "❌ CRITICAL ERROR during database cluster setup migration sequence:",
       error,
     );
     throw error;
+  } finally {
+    client.release();
   }
 }

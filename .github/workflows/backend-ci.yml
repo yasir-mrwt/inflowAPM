@@ -68,7 +68,6 @@ jobs:
 
       ACCESS_TOKEN_SECRET: ci-access-token-secret-at-least-32-characters
       REFRESH_TOKEN_SECRET: ci-refresh-token-secret-at-least-32-characters
-      JWT_SECRET: ci-jwt-secret-at-least-32-characters
       SESSION_SECRET: ci-session-secret-at-least-32-characters-long
 
       CORS_ORIGINS: http://localhost:3000

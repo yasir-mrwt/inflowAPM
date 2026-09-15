@@ -48,7 +48,8 @@ Services                  Telemetry worker
               PostgreSQL
 
 Redis supports BullMQ, rate-limit state, and short-lived API-key lookup caching.
-An additional BullMQ worker sends registration welcome emails through SMTP.
+An additional BullMQ worker sends welcome and password-reset emails through the
+Resend HTTP API.
 ```
 
 ## Technology stack
@@ -61,7 +62,7 @@ An additional BullMQ worker sends registration welcome emails through SMTP.
 - Redis 7 and BullMQ
 - Zod request validation
 - JSON Web Tokens and bcrypt
-- Nodemailer
+- Resend
 - Node test runner, Supertest, and Docker Compose
 
 ### Frontend
@@ -129,7 +130,7 @@ InflowAPM/
 - npm
 - PostgreSQL
 - Redis
-- SMTP credentials if registration emails are enabled
+- A Resend API key and verified sending domain if email delivery is enabled
 
 Install the backend dependencies:
 
@@ -220,12 +221,9 @@ The current backend validates all of these variables during startup:
 | `ACCESS_TOKEN_SECRET` | Access-token signing secret; must differ from the refresh secret and contain at least 24 characters |
 | `REFRESH_TOKEN_SECRET` | Refresh-token signing secret; must differ from the access secret and contain at least 24 characters |
 | `CORS_ORIGINS` | Comma-separated browser-origin allowlist |
-| `MAIL_ENABLED` | Enables SMTP verification, the email worker, and welcome-email enqueueing |
-| `MAIL_HOST` | SMTP host |
-| `MAIL_PORT` | SMTP port |
-| `MAIL_USER` | SMTP user |
-| `MAIL_PASSWORD` | SMTP password |
-| `MAIL_FROM` | Sender address for welcome emails |
+| `MAIL_ENABLED` | Enables the BullMQ email worker and email enqueueing |
+| `RESEND_API_KEY` | Resend API credential; required only when mail is enabled |
+| `MAIL_FROM` | Sender identity on a verified Resend sending domain |
 
 Do not commit `.env` files or production credentials.
 
