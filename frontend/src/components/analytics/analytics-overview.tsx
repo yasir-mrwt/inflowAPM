@@ -2,12 +2,15 @@
 
 import { Activity, BarChart3, Clock3, LoaderCircle, TriangleAlert } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
-  Line,
-  LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,17 +21,17 @@ import { useAnalytics } from "@/components/analytics/analytics-provider";
 import type { AnalyticsRange, TimelinePoint } from "@/lib/analytics-api";
 
 const METHOD_COLORS: Record<string, string> = {
-  GET: "#45d5ee",
-  POST: "#47c98b",
-  PUT: "#e8ae4a",
-  PATCH: "#6bb9dd",
-  DELETE: "#ef6b73",
+  GET: "#2D9CFF",
+  POST: "#35D39A",
+  PUT: "#F8C547",
+  PATCH: "#2BC7B8",
+  DELETE: "#7B57D1",
 };
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 const tooltipStyle = {
   background: "var(--surface-elevated)",
   border: "1px solid var(--border)",
-  borderRadius: "var(--radius-md)",
+  borderRadius: "6px",
   color: "var(--text-primary)",
   fontSize: "0.75rem",
 };
@@ -59,6 +62,8 @@ function ChartCard({
   icon: Icon,
   children,
   className = "",
+  contentClassName = "",
+  iconClassName = "text-[#2D9CFF]",
 }: {
   id: string;
   title: string;
@@ -66,17 +71,19 @@ function ChartCard({
   icon: typeof Activity;
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
+  iconClassName?: string;
 }) {
   return (
-    <section className={`min-w-0 border border-border-subtle bg-surface ${className}`} aria-labelledby={id}>
+    <section className={`min-w-0 overflow-hidden rounded-md border border-border-subtle bg-surface ${className}`} aria-labelledby={id}>
       <div className="flex min-h-20 items-start gap-3 border-b border-border-subtle bg-surface-inset px-4 py-4 sm:px-5">
-        <Icon size={16} className="mt-0.5 shrink-0 text-brand-steel" aria-hidden="true" />
+        <Icon size={18} className={`mt-0.5 shrink-0 ${iconClassName}`} aria-hidden="true" />
         <div>
           <h2 id={id} className="text-sm font-semibold text-text-primary">{title}</h2>
           <p className="mt-1 text-xs leading-5 text-text-muted">{description}</p>
         </div>
       </div>
-      <div className="h-72 min-w-0 p-3 pt-5 sm:p-5">{children}</div>
+      <div className={`h-72 min-w-0 p-3 pt-5 sm:p-5 ${contentClassName}`}>{children}</div>
     </section>
   );
 }
@@ -128,8 +135,8 @@ export function AnalyticsOverview() {
 
   return (
     <div className="mt-6 space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
-        <ChartCard id="request-traffic-title" title="Request traffic" description="Request volume per server-provided time bucket." icon={BarChart3}>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(24rem,1fr)]">
+        <ChartCard id="request-traffic-title" title="Request traffic" description="Total requests over the selected period." icon={BarChart3}>
           <div className="h-full min-w-0" role="img" tabIndex={0} aria-label={`Request traffic chart. ${requestSummary(timeline)}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={timeline} margin={{ top: 4, right: 4, left: -18, bottom: 0 }} accessibilityLayer>
@@ -137,24 +144,38 @@ export function AnalyticsOverview() {
                 <XAxis dataKey="time_bucket" tickFormatter={(value) => formatAxisTime(String(value), range)} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={{ stroke: "var(--border)" }} tickLine={false} minTickGap={24} />
                 <YAxis allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip cursor={{ fill: "var(--surface-hover)", opacity: 0.5 }} contentStyle={tooltipStyle} labelFormatter={(value) => formatFullTime(String(value))} formatter={(value) => [Number(value ?? 0).toLocaleString(), "Requests"]} />
-                <Bar dataKey="requests" name="Requests" fill="var(--brand-steel)" radius={[3, 3, 0, 0]} maxBarSize={30} isAnimationActive={false} />
+                <Bar dataKey="requests" name="Requests" fill="#2D9CFF" radius={[2, 2, 0, 0]} maxBarSize={30} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
-        <ChartCard id="method-activity-title" title="HTTP methods" description="Real request totals aggregated from route analytics." icon={Activity}>
+        <ChartCard id="method-activity-title" title="HTTP methods" description="Proportion of requests by method." icon={Activity} contentClassName="h-auto min-h-72">
           {methodTotals.length > 0 ? (
-            <div className="h-full min-w-0" role="img" tabIndex={0} aria-label={`HTTP method distribution. ${methodTotals.map((item) => `${item.method} ${item.requests}`).join(", ")}.`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={methodTotals} layout="vertical" margin={{ top: 4, right: 12, left: -8, bottom: 0 }} accessibilityLayer>
-                  <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
-                  <YAxis type="category" dataKey="method" width={54} tick={{ fill: "var(--text-secondary)", fontSize: 10, fontFamily: "var(--font-ibm-plex-mono)" }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: "var(--surface-hover)", opacity: 0.5 }} contentStyle={tooltipStyle} formatter={(value) => [Number(value ?? 0).toLocaleString(), "Requests"]} />
-                  <Bar dataKey="requests" name="Requests" radius={[0, 3, 3, 0]} maxBarSize={22} isAnimationActive={false} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="grid min-h-60 min-w-0 items-center gap-4 sm:grid-cols-[10.5rem_minmax(0,1fr)]" role="img" tabIndex={0} aria-label={`HTTP method distribution. ${methodTotals.map((item) => `${item.method} ${item.requests}`).join(", ")}.`}>
+              <div className="relative mx-auto h-40 w-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart accessibilityLayer>
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value, name) => [Number(value ?? 0).toLocaleString(), name]} />
+                    <Pie data={methodTotals} dataKey="requests" nameKey="method" innerRadius={50} outerRadius={76} paddingAngle={0} stroke="none" isAnimationActive={false}>
+                      {methodTotals.map((item) => <Cell key={item.method} fill={item.fill} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
+                  <span className="font-mono text-xl font-medium text-text-primary">{methodTotals.reduce((sum, item) => sum + item.requests, 0).toLocaleString()}</span>
+                  <span className="mt-0.5 text-[0.625rem] text-text-muted">requests</span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-border-subtle pb-2 font-mono text-[0.5625rem] tracking-[0.08em] text-text-muted uppercase"><span>Method</span><span>Requests</span><span>Percent</span></div>
+                <ul className="divide-y divide-border-subtle">
+                  {methodTotals.map((item) => {
+                    const total = methodTotals.reduce((sum, method) => sum + method.requests, 0);
+                    return <li key={item.method} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 py-2.5 font-mono text-[0.6875rem]"><span className="flex items-center gap-2 text-text-primary"><span className="size-2.5 rounded-full" style={{ backgroundColor: item.fill }} aria-hidden="true" />{item.method}</span><span className="text-text-secondary">{item.requests.toLocaleString()}</span><span className="w-10 text-right text-text-secondary">{Math.round((item.requests / total) * 100)}%</span></li>;
+                  })}
+                </ul>
+              </div>
             </div>
           ) : (
             <div className="flex h-full items-center justify-center px-5 text-center text-xs leading-5 text-text-muted">No GET, POST, PUT, PATCH, or DELETE activity was reported in this range.</div>
@@ -162,33 +183,38 @@ export function AnalyticsOverview() {
         </ChartCard>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ChartCard id="error-trend-title" title="Error trend" description="5xx failures by time bucket, shown without smoothing." icon={TriangleAlert}>
-          <div className="h-full min-w-0" role="img" tabIndex={0} aria-label={`Error trend chart. ${totalErrors.toLocaleString()} total server errors across ${timeline.length.toLocaleString()} time buckets.`}>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard id="error-trend-title" title="Error trend" description="5xx failures by time bucket." icon={TriangleAlert} iconClassName="text-[#FF4D55]">
+          <div className="relative h-full min-w-0" role="img" tabIndex={0} aria-label={`Error trend chart. ${totalErrors.toLocaleString()} total server errors across ${timeline.length.toLocaleString()} time buckets.`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={timeline} margin={{ top: 4, right: 4, left: -18, bottom: 0 }} accessibilityLayer>
                 <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="time_bucket" tickFormatter={(value) => formatAxisTime(String(value), range)} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={{ stroke: "var(--border)" }} tickLine={false} minTickGap={24} />
                 <YAxis allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip cursor={{ fill: "var(--surface-hover)", opacity: 0.5 }} contentStyle={tooltipStyle} labelFormatter={(value) => formatFullTime(String(value))} formatter={(value) => [Number(value ?? 0).toLocaleString(), "5xx errors"]} />
-                <Bar dataKey="errors" name="5xx errors" fill="var(--danger)" radius={[3, 3, 0, 0]} maxBarSize={30} isAnimationActive={false} />
+                <Bar dataKey="errors" name="5xx errors" fill="#FF4D55" radius={[2, 2, 0, 0]} maxBarSize={30} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
+            {totalErrors === 0 ? <div className="pointer-events-none absolute inset-0 grid place-content-center text-center"><p className="text-sm font-medium text-text-primary">No errors</p><p className="mt-1 text-xs text-text-muted">Looks good — no 5xx errors in the selected period.</p></div> : null}
           </div>
         </ChartCard>
 
-        <ChartCard id="latency-trend-title" title="Latency trend" description="Average and P95 duration from each real time bucket." icon={Clock3}>
+        <ChartCard id="latency-trend-title" title="Latency trend" description="Average and P95 latency by time bucket." icon={Clock3}>
           <div className="h-full min-w-0" role="img" tabIndex={0} aria-label="Latency trend chart showing average and P95 request duration in milliseconds.">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timeline} margin={{ top: 4, right: 8, left: -12, bottom: 0 }} accessibilityLayer>
+              <AreaChart data={timeline} margin={{ top: 4, right: 8, left: -12, bottom: 0 }} accessibilityLayer>
+                <defs>
+                  <linearGradient id="average-latency-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#35B5FF" stopOpacity={0.24} /><stop offset="100%" stopColor="#35B5FF" stopOpacity={0.01} /></linearGradient>
+                  <linearGradient id="p95-latency-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#F8C547" stopOpacity={0.22} /><stop offset="100%" stopColor="#F8C547" stopOpacity={0.01} /></linearGradient>
+                </defs>
                 <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="time_bucket" tickFormatter={(value) => formatAxisTime(String(value), range)} tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={{ stroke: "var(--border)" }} tickLine={false} minTickGap={24} />
                 <YAxis unit=" ms" tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} width={54} />
                 <Tooltip contentStyle={tooltipStyle} labelFormatter={(value) => formatFullTime(String(value))} formatter={(value, name) => [`${Number(value ?? 0).toFixed(2)} ms`, name]} />
                 <Legend wrapperStyle={{ color: "var(--text-secondary)", fontSize: "0.6875rem" }} />
-                <Line type="linear" dataKey="avg_latency" name="Average" stroke="var(--brand)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
-                <Line type="linear" dataKey="p95_latency" name="P95" stroke="var(--warning)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
-              </LineChart>
+                <Area type="linear" dataKey="p95_latency" name="P95" stroke="#F8C547" fill="url(#p95-latency-fill)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                <Area type="linear" dataKey="avg_latency" name="Average" stroke="#35B5FF" fill="url(#average-latency-fill)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>

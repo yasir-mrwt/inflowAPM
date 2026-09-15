@@ -16,12 +16,12 @@ export function KpiOverview() {
 
   const overview = analytics?.overview;
   const cards = [
-    { label: "Requests", value: overview?.total_requests.toLocaleString(), unit: "total", icon: RadioTower },
-    { label: "Errors", value: overview?.total_errors.toLocaleString(), unit: "5xx", icon: AlertTriangle },
-    { label: "Error rate", value: overview ? overview.error_rate.toFixed(2) : undefined, unit: "%", icon: Activity },
-    { label: "Avg latency", value: overview ? overview.avg_latency.toFixed(2) : undefined, unit: "ms", icon: Clock3 },
-    { label: "P95 latency", value: overview ? overview.p95_latency.toFixed(2) : undefined, unit: "ms", icon: Gauge },
-    { label: "Throughput", value: overview ? overview.throughput.toFixed(2) : undefined, unit: "req/s", icon: Activity },
+    { label: "Requests", value: overview?.total_requests.toLocaleString(), unit: "total", icon: RadioTower, iconClass: "text-[#2D9CFF]" },
+    { label: "Errors", value: overview?.total_errors.toLocaleString(), unit: "5xx", icon: AlertTriangle, iconClass: "text-[#FF4D55]" },
+    { label: "Error rate", value: overview ? overview.error_rate.toFixed(2) : undefined, unit: "%", icon: Activity, iconClass: "text-[#FF4D55]" },
+    { label: "Avg latency", value: overview ? overview.avg_latency.toFixed(2) : undefined, unit: "ms", icon: Clock3, iconClass: "text-[#2D9CFF]" },
+    { label: "P95 latency", value: overview ? overview.p95_latency.toFixed(2) : undefined, unit: "ms", icon: Gauge, iconClass: "text-[#F8C547]" },
+    { label: "Throughput", value: overview ? overview.throughput.toFixed(2) : undefined, unit: "req/s", icon: Activity, iconClass: "text-[#2D9CFF]" },
   ];
 
   return (
@@ -29,8 +29,8 @@ export function KpiOverview() {
       <AnalyticsToolbar />
 
       {status === "error" ? <div role="alert" className="mt-5 border border-danger/25 bg-danger-muted/35 p-4 text-sm text-danger">{error}</div> : null}
-      <div className="mt-5 grid gap-px overflow-hidden border border-border-subtle bg-border-subtle sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-busy={status === "loading"}>
-        {cards.map(({ label, value, unit, icon: Icon }) => <article key={label} className="min-w-0 bg-surface p-5"><div className="flex items-center justify-between"><p className="type-meta text-text-muted">{label}</p><Icon size={15} className="text-brand-steel" aria-hidden="true" /></div><p className="mt-6 font-mono text-2xl font-medium tracking-[-0.04em] text-text-primary">{status === "loading" ? <span className="text-text-muted" aria-label="Loading">—</span> : (value ?? "—")}</p><p className="mt-1 font-mono text-[0.625rem] text-text-muted">{unit}</p></article>)}
+      <div className="mt-5 grid gap-px overflow-hidden rounded-md border border-border-subtle bg-border-subtle sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-busy={status === "loading"}>
+        {cards.map(({ label, value, unit, icon: Icon, iconClass }) => <article key={label} className="min-w-0 bg-surface p-5"><div className="flex items-center gap-3"><Icon size={18} className={iconClass} aria-hidden="true" /><p className="type-meta text-text-muted">{label}</p></div><p className="mt-7 font-mono text-2xl font-medium tracking-[-0.04em] text-text-primary">{status === "loading" ? <span className="text-text-muted" aria-label="Loading">—</span> : (value ?? "—")}</p><p className="mt-1 font-mono text-[0.625rem] text-text-muted">{unit}</p></article>)}
       </div>
       {status === "ready" && overview?.total_requests === 0 ? <p className="mt-4 border-l-2 border-brand-steel px-3 text-xs leading-5 text-text-muted">No HTTP telemetry was received for this project in the selected range. These zero values come directly from the analytics API.</p> : null}
     </div>
