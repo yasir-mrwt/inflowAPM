@@ -92,7 +92,18 @@ export function MarketingFooter() {
       <div className="border-t border-border-subtle">
         <div className="mx-auto flex w-full max-w-[var(--content-width)] flex-col gap-2 px-[var(--page-gutter)] py-5 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} InflowAPM.</p>
-          <p>Built openly for developers who operate production systems.</p>
+          <p>
+            Built openly for developers by{" "}
+            <a
+              href="https://yasirmarwat.site"
+              target="_blank"
+              rel="noopener"
+              className="transition-colors hover:text-text-secondary"
+            >
+              Yasir Marwat
+            </a>
+            .
+          </p>
         </div>
       </div>
     </footer>
