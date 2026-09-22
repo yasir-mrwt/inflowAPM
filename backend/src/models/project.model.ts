@@ -7,6 +7,7 @@ export interface ProjectRow {
   name: string;
   api_key: string;
   user_id: string;
+  status: string;
   created_at: Date;
 }
 
@@ -24,7 +25,7 @@ export async function createProjectModel(
     const runner = client || pool;
     const apiKeyHash = hashSecret(api_key);
     const result: QueryResult<ProjectRow> = await runner.query(
-      `insert into inflowapm.projects(name,api_key,user_id) values($1,$2,$3) returning id,name,api_key,user_id,created_at;`,
+      `insert into inflowapm.projects(name,api_key,user_id) values($1,$2,$3) returning id,name,api_key,user_id,status,created_at;`,
       [name, apiKeyHash, user_id],
     );
     return result.rows[0] || null;
@@ -44,7 +45,7 @@ export async function searchProjectByUserIdModel(
   try {
     const runner = client || pool;
     const result: QueryResult<ProjectListRow> = await runner.query(
-      `select id,name,api_key,user_id,created_at ,COUNT(*) OVER() AS total_count from inflowapm.projects where user_id=$1 order by created_at desc limit $2 offset $3;`,
+      `select id,name,api_key,user_id,status,created_at ,COUNT(*) OVER() AS total_count from inflowapm.projects where user_id=$1 order by created_at desc limit $2 offset $3;`,
       [user_id, limit, offset],
     );
     return result.rows;
@@ -75,6 +76,7 @@ export interface SearchProjectbyProjectId {
   id: string;
   name: string;
   user_id: string;
+  status: string;
   created_at: Date;
 }
 
@@ -84,7 +86,7 @@ export async function searchProjectByProjectIdModel(
 ): Promise<SearchProjectbyProjectId | null> {
   try {
     const result = await pool.query(
-      ` SELECT id, name, user_id, created_at
+      ` SELECT id, name, user_id, status, created_at
         FROM inflowapm.projects
         WHERE id = $1;
       `,
@@ -101,6 +103,8 @@ export async function searchProjectByProjectIdModel(
 export interface ValidateProject {
   id: string;
   user_id: string;
+  status: string;
+  owner_status: string;
 }
 
 //this will be used by telemetry ingestion middleware to verify that incoming client data streams carry a valid SaaS token before letting them write to your disk.
@@ -111,8 +115,10 @@ export async function validateProjectApiKeyModel(
     const apiKeyHash = hashSecret(api_key);
     const result: QueryResult<ValidateProject & { api_key: string }> =
       await pool.query(
-        `select id,user_id,api_key from inflowapm.projects
-         where api_key=$1 or api_key=$2;`,
+        `select p.id,p.user_id,p.api_key,p.status,u.status as owner_status
+         from inflowapm.projects p
+         join inflowapm.users u on u.id=p.user_id
+         where p.api_key=$1 or p.api_key=$2;`,
         [apiKeyHash, api_key],
       );
     const project = result.rows[0];
@@ -132,6 +138,8 @@ export async function validateProjectApiKeyModel(
     return {
       id: project.id,
       user_id: project.user_id,
+      status: project.status,
+      owner_status: project.owner_status,
     };
   } catch (error: unknown) {
     console.error("error while validating client data stream");

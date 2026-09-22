@@ -40,6 +40,24 @@ export const authRateLimit = rateLimit({
   },
 });
 
+export const adminAuthRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skip: () => config.node_env === "test",
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip || "unknown-ip"),
+  store: new redisStore({
+    sendCommand: (command: string, ...args: string[]) =>
+      redisClient.call(command, ...args) as any,
+    prefix: "rl:admin-auth",
+  }),
+  message: {
+    success: false,
+    message: "too many admin authentication attempts; try again later",
+  },
+});
+
 export const telemetryRateLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 120,

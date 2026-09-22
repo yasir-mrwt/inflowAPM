@@ -9,6 +9,7 @@ export interface UserRow {
   first_name: string;
   last_name: string;
   role: string;
+  status: string;
   refresh_token: string | null;
   created_at: Date;
 }
@@ -22,7 +23,7 @@ export async function registerUserModel(
 ): Promise<UserRow | null> {
   try {
     const result: QueryResult<UserRow> = await pool.query(
-      `insert into inflowapm.users(email,password,first_name,last_name) values($1,$2,$3,$4) returning id, email,first_name,last_name, role,refresh_token, created_at;`,
+      `insert into inflowapm.users(email,password,first_name,last_name) values($1,$2,$3,$4) returning id, email,first_name,last_name, role,status,refresh_token, created_at;`,
       [email, password, first_name, last_name],
     );
     return result.rows[0] || null;
@@ -51,6 +52,7 @@ export async function checkUser(
         first_name,
         last_name,
         role,
+        status,
         refresh_token,
         password,
         created_at
@@ -76,7 +78,7 @@ export async function saveRefreshToken(
   try {
     const refreshTokenHash = hashSecret(refresh_token);
     const result: QueryResult<UserRow> = await pool.query(
-      `update inflowapm.users set refresh_token=$1 where id=$2 returning id,email,first_name,last_name,role,refresh_token,created_at;`,
+      `update inflowapm.users set refresh_token=$1 where id=$2 returning id,email,first_name,last_name,role,status,refresh_token,created_at;`,
       [refreshTokenHash, userId],
     );
     return result.rows[0] || null;
@@ -95,7 +97,7 @@ export interface LogoutUserRow {
 export async function logoutUser(userId: string): Promise<UserRow | null> {
   try {
     const result: QueryResult<UserRow> = await pool.query(
-      `UPDATE inflowapm.users SET refresh_token = NULL WHERE id = $1 returning id,email,first_name,last_name,role,refresh_token,created_at;
+      `UPDATE inflowapm.users SET refresh_token = NULL WHERE id = $1 returning id,email,first_name,last_name,role,status,refresh_token,created_at;
 `,
       [userId],
     );
@@ -113,7 +115,7 @@ export async function refreshTokenVerification(
   try {
     const refreshTokenHash = hashSecret(refresh_token);
     const result: QueryResult<UserRow> = await pool.query(
-      `select id,email,first_name,last_name,role,refresh_token,created_at
+      `select id,email,first_name,last_name,role,status,refresh_token,created_at
        from inflowapm.users
        where refresh_token=$1 or refresh_token=$2;`,
       [refreshTokenHash, refresh_token],
@@ -209,7 +211,7 @@ export async function resetPasswordModel(
     password = $1,
     refresh_token = NULL
   where id = $2
-  returning id, email, first_name, last_name, role, created_at;  `,
+  returning id, email, first_name, last_name, role, status, created_at;  `,
       [hashedPassword, user_id],
     );
     return result.rows[0] || null;
@@ -298,6 +300,7 @@ export async function createOAuthUserModel(
       first_name,
       last_name,
       role,
+      status,
       refresh_token,
       created_at;
     `,
@@ -323,6 +326,7 @@ export async function findUserByIdModel(
       first_name,
       last_name,
       role,
+      status,
       refresh_token,
       created_at
     FROM inflowapm.users

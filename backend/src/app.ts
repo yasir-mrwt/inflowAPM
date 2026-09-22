@@ -11,6 +11,7 @@ import { config } from "./configs/env.js";
 import pool from "./configs/db.js";
 import { sessionMiddleware } from "./utils/session.js";
 import redisClient from "./utils/redis.js";
+import adminRouter from "./routes/admin.routes.js";
 
 const app: Application = express();
 
@@ -64,6 +65,9 @@ app.get("/health", async (_req: Request, res: Response) => {
 
 //for authentication routes
 app.use("/api/v1/auth", userRouter);
+
+// Separate, server-authorized Super Admin API.
+app.use("/api/v1/admin", adminRouter);
 
 //for project routes
 app.use("/api/v1/projects", projectRouter);
