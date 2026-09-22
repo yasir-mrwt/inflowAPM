@@ -26,8 +26,24 @@ export async function ingestAuthMiddleware(
   //get all values from there if any
   const cacheData = await redisClient.get(cacheKey);
   if (cacheData) {
-    (req as any).project = JSON.parse(cacheData);
-    return next();
+    const cachedProject = JSON.parse(cacheData) as {
+      id: string;
+      user_id: string;
+      status?: string;
+      owner_status?: string;
+    };
+    if (
+      cachedProject.status === "active" &&
+      cachedProject.owner_status === "active"
+    ) {
+      req.project = {
+        ...cachedProject,
+        status: cachedProject.status,
+        owner_status: cachedProject.owner_status,
+      };
+      return next();
+    }
+    await redisClient.del(cacheKey);
   }
   const result = await validateProjectApiKeyModel(api_key);
   if (!result) {
@@ -36,9 +52,15 @@ export async function ingestAuthMiddleware(
       401,
     );
   }
+  if (result.status !== "active") {
+    throw new AppError("project is disabled", 403);
+  }
+  if (result.owner_status !== "active") {
+    throw new AppError("project owner account is suspended", 403);
+  }
   //if no values found then save values there
   await redisClient.set(cacheKey, JSON.stringify(result), "EX", 300);
 
-  (req as any).project = result;
+  req.project = result;
   return next();
 }

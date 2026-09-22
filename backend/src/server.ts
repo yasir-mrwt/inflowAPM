@@ -6,6 +6,8 @@ import redisClient from "./utils/redis.js";
 import { connectSessionRedis, closeSessionRedis } from "./utils/session.js";
 
 await initializedDB();
+const { bootstrapSuperAdmin } = await import("./services/admin.service.js");
+await bootstrapSuperAdmin();
 await redisClient.ping();
 await connectSessionRedis();
 

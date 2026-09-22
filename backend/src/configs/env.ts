@@ -32,6 +32,34 @@ if (isTest) {
   requiredEnvs.push("TEST_DATABASE_URL", "TEST_REDIS_URL");
 }
 
+if (currentEnv === "production") {
+  requiredEnvs.push("ADMIN_EMAIL", "ADMIN_INITIAL_PASSWORD");
+}
+
+if (
+  Boolean(process.env.ADMIN_EMAIL) !==
+  Boolean(process.env.ADMIN_INITIAL_PASSWORD)
+) {
+  throw new Error(
+    "ADMIN_EMAIL and ADMIN_INITIAL_PASSWORD must be configured together",
+  );
+}
+
+if (
+  process.env.ADMIN_INITIAL_PASSWORD &&
+  (process.env.ADMIN_INITIAL_PASSWORD.length < 8 ||
+    process.env.ADMIN_INITIAL_PASSWORD.length > 100)
+) {
+  throw new Error("ADMIN_INITIAL_PASSWORD must be 8 to 100 characters");
+}
+
+if (
+  process.env.ADMIN_EMAIL &&
+  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.ADMIN_EMAIL)
+) {
+  throw new Error("ADMIN_EMAIL must be a valid email address");
+}
+
 const mailEnabled = !isTest && process.env.MAIL_ENABLED === "true";
 
 if (mailEnabled) {
@@ -119,6 +147,8 @@ interface EnvConfiguration {
   google_client_secret: string;
   google_redirect_uri: string;
   session_secret: string;
+  admin_email: string | undefined;
+  admin_initial_password: string | undefined;
 }
 
 export const config: Readonly<EnvConfiguration> = {
@@ -143,4 +173,6 @@ export const config: Readonly<EnvConfiguration> = {
   google_client_secret: process.env.GOOGLE_CLIENT_SECRET!,
   google_redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
   session_secret: process.env.SESSION_SECRET!,
+  admin_email: process.env.ADMIN_EMAIL?.trim().toLowerCase(),
+  admin_initial_password: process.env.ADMIN_INITIAL_PASSWORD,
 };

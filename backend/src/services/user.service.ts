@@ -81,6 +81,10 @@ export async function LoginUserService(
     );
   }
 
+  if (ifUser.status !== "active") {
+    throw new AppError("account is suspended", 403);
+  }
+
   return ifUser;
 }
 
@@ -106,6 +110,9 @@ export async function refreshTokenSearchService(
   }
   if (result.id !== decoded.id) {
     throw new AppError("unauthenticated user/invalid refresh token", 400);
+  }
+  if (result.status !== "active") {
+    throw new AppError("account is suspended", 403);
   }
   return result;
 }
