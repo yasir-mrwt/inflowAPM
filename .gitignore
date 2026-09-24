@@ -8,6 +8,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
+!frontend/src/app/admin/(dashboard)/logs/
+!frontend/src/app/admin/(dashboard)/logs/page.tsx
 *.log
 
 # Local environment variables variables
