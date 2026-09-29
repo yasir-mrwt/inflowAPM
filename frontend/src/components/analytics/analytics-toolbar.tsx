@@ -1,13 +1,14 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { useAnalytics } from "@/components/analytics/analytics-provider";
 import { useProjects } from "@/components/projects/projects-provider";
 import { Button } from "@/components/ui/button";
 import type { AnalyticsRange } from "@/lib/analytics-api";
 
-export function AnalyticsToolbar() {
+export function AnalyticsToolbar({ actions }: { actions?: ReactNode }) {
   const { selectedProject } = useProjects();
   const { range, setRange, reload, status } = useAnalytics();
 
@@ -30,6 +31,7 @@ export function AnalyticsToolbar() {
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
         </select>
+        {actions}
         <Button type="button" variant="outline" size="sm" onClick={reload} disabled={status === "loading"} aria-label="Refresh analytics">
           <RefreshCw size={14} className={status === "loading" ? "animate-spin motion-reduce:animate-none" : ""} aria-hidden="true" />
           <span className="hidden sm:inline">Refresh</span>
