@@ -1,10 +1,13 @@
 "use client";
 
-import { Activity, Clock3, LoaderCircle } from "lucide-react";
+import { Activity, Clock3, Download, LoaderCircle } from "lucide-react";
 
 import { AnalyticsBoundary } from "@/components/analytics/analytics-boundary";
 import { useAnalytics } from "@/components/analytics/analytics-provider";
 import { AnalyticsToolbar } from "@/components/analytics/analytics-toolbar";
+import { useProjects } from "@/components/projects/projects-provider";
+import { Button } from "@/components/ui/button";
+import { buildCsv, buildRequestsCsvFilename } from "@/lib/csv";
 
 function formatBucket(value: string): string {
   const date = new Date(value);
@@ -18,13 +21,53 @@ function formatBucket(value: string): string {
 }
 
 export function RequestTimeline() {
-  const { analytics, status } = useAnalytics();
+  const { analytics, range, status } = useAnalytics();
+  const { selectedProject } = useProjects();
   const timeline = analytics?.timeline ?? [];
   const busiestBucket = Math.max(...timeline.map((point) => point.requests), 1);
 
+  function exportCurrentView() {
+    if (!selectedProject || timeline.length === 0) return;
+    const csv = buildCsv(
+      ["Timestamp", "Request Count", "Error Count", "Average Duration (ms)", "P95 Duration (ms)"],
+      timeline.map((point) => [
+        point.time_bucket,
+        point.requests,
+        point.errors,
+        point.avg_latency,
+        point.p95_latency,
+      ]),
+    );
+    const filename = buildRequestsCsvFilename(selectedProject.name, range);
+    const objectUrl = URL.createObjectURL(
+      new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const download = document.createElement("a");
+    download.href = objectUrl;
+    download.download = filename;
+    download.hidden = true;
+    document.body.appendChild(download);
+    download.click();
+    download.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  }
+
   return (
     <AnalyticsBoundary>
-      <AnalyticsToolbar />
+      <AnalyticsToolbar actions={
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={exportCurrentView}
+          disabled={status !== "ready" || timeline.length === 0 || !selectedProject}
+          aria-label="Export currently loaded request timeline as CSV"
+          title="Export the currently loaded request timeline as CSV"
+        >
+          <Download size={14} aria-hidden="true" />
+          <span className="hidden sm:inline">Export CSV</span>
+        </Button>
+      } />
 
       {status === "loading" ? (
         <div className="mt-5 flex min-h-52 items-center justify-center gap-3 border border-border-subtle bg-surface text-sm text-text-muted" role="status">
