@@ -5,6 +5,8 @@ import { AuthShell } from "@/components/auth/auth-shell";
 
 export const metadata: Metadata = { title: "Sign in", description: "Sign in to your InflowAPM workspace.", robots: { index: false, follow: false } };
 
-export default function LoginPage() {
-  return <AuthShell animation="/animations/login.lottie" eyebrow="Trace every request" title="Clarity starts with context." description="Return to the workspace where latency, failures, and route health become one investigation path."><AuthForm mode="login" /></AuthShell>;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ reset?: string | string[] }> }) {
+  const resetValue = (await searchParams).reset;
+  const resetSuccess = resetValue === "success";
+  return <AuthShell animation="/animations/login.lottie" eyebrow="Trace every request" title="Clarity starts with context." description="Return to the workspace where latency, failures, and route health become one investigation path."><AuthForm mode="login" resetSuccess={resetSuccess} /></AuthShell>;
 }
