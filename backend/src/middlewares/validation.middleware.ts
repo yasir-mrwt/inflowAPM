@@ -14,6 +14,10 @@ import {
 import { telemetrySchema } from "../schemas/telemetry.schema.js";
 import { analyticsDashboardQuerySchema } from "../schemas/analytics.schema.js";
 import {
+  telemetryRequestListQuerySchema,
+  telemetryRequestParamsSchema,
+} from "../schemas/telemetryRequest.schema.js";
+import {
   googleCallbackSchema,
   oauthExchangeSchema,
 } from "../schemas/googleLogin.schema.js";
@@ -127,6 +131,28 @@ export async function analyticsDashboardQueryValidation(
     return next(result.error);
   }
   res.locals.analyticsQuery = result.data;
+  return next();
+}
+
+export async function telemetryRequestListQueryValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = telemetryRequestListQuerySchema.safeParse(req.query);
+  if (!result.success) return next(result.error);
+  res.locals.telemetryRequestQuery = result.data;
+  return next();
+}
+
+export async function telemetryRequestParamsValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = telemetryRequestParamsSchema.safeParse(req.params);
+  if (!result.success) return next(result.error);
+  res.locals.telemetryRequestParams = result.data;
   return next();
 }
 
