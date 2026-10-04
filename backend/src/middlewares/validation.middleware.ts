@@ -18,6 +18,11 @@ import {
   telemetryRequestParamsSchema,
 } from "../schemas/telemetryRequest.schema.js";
 import {
+  issueDetailQuerySchema,
+  issueParamsSchema,
+  issuesListQuerySchema,
+} from "../schemas/issues.schema.js";
+import {
   googleCallbackSchema,
   oauthExchangeSchema,
 } from "../schemas/googleLogin.schema.js";
@@ -153,6 +158,31 @@ export async function telemetryRequestParamsValidation(
   const result = telemetryRequestParamsSchema.safeParse(req.params);
   if (!result.success) return next(result.error);
   res.locals.telemetryRequestParams = result.data;
+  return next();
+}
+
+export async function issuesListQueryValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const result = issuesListQuerySchema.safeParse(req.query);
+  if (!result.success) return next(result.error);
+  res.locals.issuesQuery = result.data;
+  return next();
+}
+
+export async function issueDetailValidation(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const paramsResult = issueParamsSchema.safeParse(req.params);
+  if (!paramsResult.success) return next(paramsResult.error);
+  const queryResult = issueDetailQuerySchema.safeParse(req.query);
+  if (!queryResult.success) return next(queryResult.error);
+  res.locals.issueParams = paramsResult.data;
+  res.locals.issueDetailQuery = queryResult.data;
   return next();
 }
 

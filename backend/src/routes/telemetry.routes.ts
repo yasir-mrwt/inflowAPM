@@ -7,11 +7,17 @@ import {
   telemetryRequestListQueryValidation,
   telemetryRequestParamsValidation,
   telemetryValidation,
+  issueDetailValidation,
+  issuesListQueryValidation,
 } from "../middlewares/validation.middleware.js";
 import {
   getTelemetryRequestDetailController,
   listTelemetryRequestsController,
 } from "../controllers/telemetryRequest.controller.js";
+import {
+  getIssueDetailController,
+  listIssuesController,
+} from "../controllers/issues.controller.js";
 
 const telemetryRouter: Application = Router();
 
@@ -35,6 +41,20 @@ telemetryRouter.get(
   authMiddleware,
   telemetryRequestParamsValidation,
   getTelemetryRequestDetailController,
+);
+
+telemetryRouter.get(
+  "/issues",
+  authMiddleware,
+  issuesListQueryValidation,
+  listIssuesController,
+);
+
+telemetryRouter.get(
+  "/issues/:issueId",
+  authMiddleware,
+  issueDetailValidation,
+  getIssueDetailController,
 );
 
 export default telemetryRouter;
