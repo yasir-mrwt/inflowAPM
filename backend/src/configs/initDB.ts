@@ -153,6 +153,12 @@ export async function initializedDB(): Promise<void> {
     await client.query(
       `create index if not exists idx_telemetry_admin_recent_errors on inflowapm.telemetry_events(occurred_at desc) where status >= 500;`,
     );
+    await client.query(
+      `create index if not exists idx_telemetry_project_errors
+       on inflowapm.telemetry_events(project_id, occurred_at desc, id desc)
+       where (type = 'http' and status >= 500)
+          or (type = 'event' and route = 'error');`,
+    );
 
     await client.query(
       `create index if not exists idx_users_admin_list on inflowapm.users(status, role, created_at desc);`,

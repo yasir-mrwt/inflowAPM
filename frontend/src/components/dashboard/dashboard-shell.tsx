@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Bug, ChevronLeft, ChevronRight, FolderKanban, Gauge, LogOut, Menu, RadioTower, Route, Settings, X } from "lucide-react";
+import { Activity, Bug, ChevronLeft, ChevronRight, CircleAlert, FolderKanban, Gauge, LogOut, Menu, RadioTower, Route, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -17,6 +17,7 @@ const navigation = [
   { label: "Projects", href: "/dashboard/projects", icon: FolderKanban },
   { label: "Requests / Telemetry", href: "/dashboard/requests", icon: RadioTower },
   { label: "Routes", href: "/dashboard/routes", icon: Route },
+  { label: "Issues", href: "/dashboard/issues", icon: CircleAlert },
   { label: "Errors", href: "/dashboard/errors", icon: Bug },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ] as const;
